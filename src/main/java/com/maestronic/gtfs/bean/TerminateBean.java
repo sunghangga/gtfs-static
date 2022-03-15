@@ -1,6 +1,6 @@
 package com.maestronic.gtfs.bean;
 
-import com.maestronic.gtfs.importer.ImportTransaction;
+import com.maestronic.gtfs.service.ImportTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PreDestroy;
@@ -8,10 +8,10 @@ import javax.annotation.PreDestroy;
 public class TerminateBean {
 
     @Autowired
-    private ImportTransaction importTransaction;
+    private ImportTransactionService importTransactionService;
 
     @PreDestroy
     public void onDestroy() throws Exception {
-        importTransaction.killRunProcByStatus();
+        importTransactionService.killRunProcByStatus();
     }
 }

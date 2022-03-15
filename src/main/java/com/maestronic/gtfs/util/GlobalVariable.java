@@ -35,6 +35,7 @@ public interface GlobalVariable {
     String IMPORT_STATE_DELETE = "DELETE";
     String IMPORT_STATE_VALIDATE = "VALIDATE";
     String IMPORT_STATE_UNMARSHALL = "UNMARSHALL";
+    String IMPORT_STATE_TERMINATE = "TERMINATE";
 
     // Import detail
     String IMPORT_DETAIL_PREPARE = "Preparing GTFS data.";
@@ -51,7 +52,10 @@ public interface GlobalVariable {
     String ROUTES = "routes.txt";
     String TRIPS = "trips.txt";
     String STOP_TIMES = "stop_times.txt";
+    String CALENDAR = "calendar.txt";
     String CALENDAR_DATES = "calendar_dates.txt";
+    String FARE_ATTRIBUTES = "fare_attributes.txt";
+    String FARE_RULES = "fare_rules.txt";
     String SHAPES = "shapes.txt";
     String TRANSFERS = "transfers.txt";
     String FEED_INFO = "feed_info.txt";
