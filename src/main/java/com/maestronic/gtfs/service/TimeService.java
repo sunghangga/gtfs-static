@@ -1,4 +1,9 @@
-package com.maestronic.gtfs.util;
+package com.maestronic.gtfs.service;
+
+import com.maestronic.gtfs.util.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -6,9 +11,13 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
-public class Time {
+@Service
+public class TimeService {
 
-    public static Duration strTimeToDuration(String time) {
+    @Value("${timezone}")
+    private String timezone;
+    
+    public Duration strTimeToDuration(String time) {
         String[] parts = time.split(":");
         Duration duration = Duration.ZERO;
         if (parts.length == 3) {
@@ -28,8 +37,7 @@ public class Time {
         return duration;
     }
 
-    public static String calculateTime(long seconds) {
-
+    public String calculateTime(long seconds) {
         long day = TimeUnit.SECONDS.toDays(seconds);
         long hours = TimeUnit.SECONDS.toHours(seconds) - (day * 24);
         long minute = TimeUnit.SECONDS.toMinutes(seconds) - (TimeUnit.SECONDS.toHours(seconds) * 60);
@@ -37,39 +45,39 @@ public class Time {
         return day + " days " + hours + " hours " + minute + " minutes " + second + " seconds";
     }
 
-    public static Integer localDateZoneGTFS() {
+    public Integer localDateZoneGTFS() {
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return Integer.parseInt(LocalDate.now(ZoneId.of("Europe/Amsterdam")).format(dateFormat));
+        return Integer.parseInt(LocalDate.now(ZoneId.of(timezone)).format(dateFormat));
     }
 
-    public static Integer localDateZoneBeforeGTFS() {
+    public Integer localDateZoneBeforeGTFS() {
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return Integer.parseInt((LocalDate.now(ZoneId.of("Europe/Amsterdam")).minusDays(1)).format(dateFormat));
+        return Integer.parseInt((LocalDate.now(ZoneId.of(timezone)).minusDays(1)).format(dateFormat));
     }
 
-    public static ZonedDateTime unixToZoneDateTime(Long unixTime) {
+    public ZonedDateTime unixToZoneDateTime(Long unixTime) {
         if (unixTime <= 0) {
             return null;
         }
         DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Instant instant = Instant.ofEpochSecond(unixTime);
-        return ZonedDateTime.parse(ZonedDateTime.ofInstant(instant, ZoneId.of("Europe/Amsterdam")).format(zoneFormat));
+        return ZonedDateTime.parse(ZonedDateTime.ofInstant(instant, ZoneId.of(timezone)).format(zoneFormat));
     }
 
-    public static LocalTime unixToTime(Long unixTime) {
+    public LocalTime unixToTime(Long unixTime) {
         DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
         Instant instant = Instant.ofEpochSecond(unixTime);
-        return LocalTime.parse(LocalTime.from(instant.atZone(ZoneId.of("Europe/Amsterdam"))).format(timeFormat));
+        return LocalTime.parse(LocalTime.from(instant.atZone(ZoneId.of(timezone))).format(timeFormat));
     }
 
-    public static ZonedDateTime durToZoneDateTime(Duration duration) {
+    public ZonedDateTime durToZoneDateTime(Duration duration) {
         DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        LocalDate nowDate = LocalDate.now(ZoneId.of("Europe/Amsterdam"));
+        LocalDate nowDate = LocalDate.now(ZoneId.of(timezone));
         LocalTime localTime = LocalTime.MIDNIGHT.plus(duration);
         return ZonedDateTime.parse(LocalDateTime.of(nowDate, localTime).format(zoneFormat));
     }
 
-    public static ZonedDateTime durToZoneDateTime(Duration duration, String gtfsDate) {
+    public ZonedDateTime durToZoneDateTime(Duration duration, String gtfsDate) {
         DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         LocalDate nowDate;
         try {
@@ -82,30 +90,30 @@ public class Time {
         return ZonedDateTime.parse(localDateTime.format(zoneFormat));
     }
 
-    public static ZonedDateTime localDateTimeZone() {
+    public ZonedDateTime localDateTimeZone() {
         DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        return ZonedDateTime.parse(ZonedDateTime.now(ZoneId.of("Europe/Amsterdam")).format(zoneFormat));
+        return ZonedDateTime.parse(ZonedDateTime.now(ZoneId.of(timezone)).format(zoneFormat));
     }
 
-    public static LocalTime timeZone() {
+    public LocalTime timeZone() {
         DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
-        return LocalTime.parse(LocalTime.now(ZoneId.of("Europe/Amsterdam")).format(zoneFormat));
+        return LocalTime.parse(LocalTime.now(ZoneId.of(timezone)).format(zoneFormat));
     }
 
-    public static LocalDateTime localDateTime() {
+    public LocalDateTime localDateTime() {
         DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return LocalDateTime.parse(LocalDateTime.now(ZoneId.of("Europe/Amsterdam")).format(dateTimeFormat));
+        return LocalDateTime.parse(LocalDateTime.now(ZoneId.of(timezone)).format(dateTimeFormat));
     }
 
-    public static LocalDateTime strToLocalDateTime(String strTime) {
+    public LocalDateTime strToLocalDateTime(String strTime) {
         DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return LocalDateTime.parse(strTime, dateTimeFormat);
     }
 
-    public static long concatDateTime(String strTime) {
+    public long concatDateTime(String strTime) {
         DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return LocalDateTime.of(LocalDate.parse(LocalDate.now(
-                ZoneId.of("Europe/Amsterdam")).format(dateTimeFormat)),
-                LocalTime.parse(strTime)).atZone(ZoneId.of("Europe/Amsterdam")).toEpochSecond();
+                ZoneId.of(timezone)).format(dateTimeFormat)),
+                LocalTime.parse(strTime)).atZone(ZoneId.of(timezone)).toEpochSecond();
     }
 }

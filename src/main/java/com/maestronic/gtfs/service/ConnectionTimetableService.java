@@ -8,6 +8,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,10 @@ public class ConnectionTimetableService implements GlobalVariable {
 
     @Autowired
     private ConnectionTimetableRepository connectionTimetableRepository;
+    @Autowired
+    private TimeService timeService;
+    @Value("${timezone}")
+    private String timezone;
 
     private Gtfs getDataConnectionTimetable(List<ConnectionTimetable> resultList, String stop_id) {
         ConnectionTimetable row;
@@ -43,13 +48,13 @@ public class ConnectionTimetableService implements GlobalVariable {
                     row.getTransportMode(),
                     row.getDisabledAccessible(),
                     row.getVisuallyAccessible(),
-                    Time.durToZoneDateTime(row.getDepartureTime(), row.getDate().toString())
+                    timeService.durToZoneDateTime(row.getDepartureTime(), row.getDate().toString())
             );
 
             TimetabledFeederArrival timetabledFeederArrival = new TimetabledFeederArrival(
                     row.getStopId(),
                     row.getStopName(),
-                    Time.durToZoneDateTime(row.getArrivalTime(), row.getDate().toString()),
+                    timeService.durToZoneDateTime(row.getArrivalTime(), row.getDate().toString()),
                     feederJourney
             );
             connectionTimetableDelivery.getTimetabledFeederArrivals().add(timetabledFeederArrival);
@@ -57,7 +62,7 @@ public class ConnectionTimetableService implements GlobalVariable {
         // Add to root element
         connectionTimetableDelivery.setMonitoringRef(stop_id);
         ServiceDelivery serviceDelivery = new ServiceDelivery();
-        serviceDelivery.setResponseTimestamp(Time.localDateTimeZone());
+        serviceDelivery.setResponseTimestamp(timeService.localDateTimeZone());
         serviceDelivery.setStatus(true);
         serviceDelivery.getConnectionTimetableDeliveries().add(connectionTimetableDelivery);
 
@@ -69,7 +74,7 @@ public class ConnectionTimetableService implements GlobalVariable {
     }
 
     public String getRealConnectionTimetableXml(String stop_id) {
-        List<ConnectionTimetable> resultList = connectionTimetableRepository.findConnectionTimetableByParam(stop_id);
+        List<ConnectionTimetable> resultList = connectionTimetableRepository.findConnectionTimetableByParam(stop_id, timezone);
         if (resultList == null || resultList.size() <= 0) {
             return null;
         }
@@ -78,7 +83,7 @@ public class ConnectionTimetableService implements GlobalVariable {
     }
 
     public String getRealConnectionTimetableJson(String stop_id) throws Exception {
-        List<ConnectionTimetable> resultList = connectionTimetableRepository.findConnectionTimetableByParam(stop_id);
+        List<ConnectionTimetable> resultList = connectionTimetableRepository.findConnectionTimetableByParam(stop_id, timezone);
         if (resultList == null || resultList.size() <= 0) {
             return null;
         }
@@ -96,7 +101,7 @@ public class ConnectionTimetableService implements GlobalVariable {
 
             for (CSVRecord csvRecord : csvRecords) {
                 ConnectionTimetable connectionTimetable = new ConnectionTimetable(
-                        Time.localDateZoneGTFS(),
+                        timeService.localDateZoneGTFS(),
                         Integer.parseInt(csvRecord.get("direction_id")),
                         csvRecord.get("trip_id"),
                         csvRecord.get("route_id"),
@@ -107,8 +112,8 @@ public class ConnectionTimetableService implements GlobalVariable {
                         csvRecord.get("trip_headsign"),
                         csvRecord.get("first_stop_id"),
                         csvRecord.get("last_stop_id"),
-                        Time.strTimeToDuration(csvRecord.get("departure_time")),
-                        Time.strTimeToDuration(csvRecord.get("arrival_time")),
+                        timeService.strTimeToDuration(csvRecord.get("departure_time")),
+                        timeService.strTimeToDuration(csvRecord.get("arrival_time")),
                         csvRecord.get("route_long_name"),
                         csvRecord.get("stop_name"),
                         Double.parseDouble(csvRecord.get("stop_lat")),

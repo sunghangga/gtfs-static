@@ -9,7 +9,6 @@ import com.maestronic.gtfs.repository.ImportDetailRepository;
 import com.maestronic.gtfs.repository.ImportRepository;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.Logger;
-import com.maestronic.gtfs.util.Time;
 import nl.connekt.bison.chb.Export;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -42,6 +41,8 @@ public class ImportService implements GlobalVariable {
     private ImportTransactionService importTransactionService;
     @Autowired
     private FileService fileServiceHelper;
+    @Autowired
+    private TimeService timeService;
     @Value("${file.upload-dir-gtfs}")
     private String destDirGtfs;
     @Value("${file.upload-dir-chb}")
@@ -328,7 +329,7 @@ public class ImportService implements GlobalVariable {
                         // Check if no feed in database
                         if (feedInfo == null) {
                             // Check if feed date is valid
-                            if (Time.localDateZoneGTFS() >= Integer.parseInt(csvRecord.get("feed_start_date"))) {
+                            if (timeService.localDateZoneGTFS() >= Integer.parseInt(csvRecord.get("feed_start_date"))) {
                                 logMessage = "Check validation GTFS data is complete. GTFS data is valid, ready to import!";
                                 Logger.info(logMessage);
                                 importInit.setUpdatedAt(LocalDateTime.now());
@@ -364,7 +365,7 @@ public class ImportService implements GlobalVariable {
                         String[] feedVersionDb = feedInfo.getFeedVersion().split("_");
                         // Check if version import is latest and start_date is valid
                         if (Integer.parseInt(feedVersionCsv[feedVersionCsv.length - 1]) >= Integer.parseInt(feedVersionDb[feedVersionDb.length - 1])
-                                && Time.localDateZoneGTFS() >= Integer.parseInt(csvRecord.get("feed_start_date"))) {
+                                && timeService.localDateZoneGTFS() >= Integer.parseInt(csvRecord.get("feed_start_date"))) {
                             logMessage = "Check validation GTFS data is complete. GTFS data is valid, ready to import!";
                             Logger.info(logMessage);
                             importInit.setUpdatedAt(LocalDateTime.now());
@@ -470,7 +471,7 @@ public class ImportService implements GlobalVariable {
             if (procStatus) {
                 logMessage = "Import process finished! "
                         + String.format("%,d", importComponent.getSaveCount()) + " data (" + importComponent.getEntityList().size() + " entity) have been saved. "
-                        + "Process completed in " + Time.calculateTime((long) stopWatch.getLastTaskInfo().getTimeSeconds());
+                        + "Process completed in " + timeService.calculateTime((long) stopWatch.getLastTaskInfo().getTimeSeconds());
                 Logger.info(logMessage);
                 importInit.setStatus(IMPORT_STATUS_SUCCEED);
             } else {
@@ -538,7 +539,7 @@ public class ImportService implements GlobalVariable {
             if (procStatus) {
                 logMessage = "Import process finished! "
                         + String.format("%,d", importComponent.getSaveCount()) + " data (" + importComponent.getEntityList().size() + " entity) have been saved. "
-                        + "Process completed in " + Time.calculateTime((long) stopWatch.getLastTaskInfo().getTimeSeconds());
+                        + "Process completed in " + timeService.calculateTime((long) stopWatch.getLastTaskInfo().getTimeSeconds());
                 Logger.info(logMessage);
                 importInit.setStatus(IMPORT_STATUS_SUCCEED);
             } else {
@@ -606,7 +607,7 @@ public class ImportService implements GlobalVariable {
             if (procStatus) {
                 logMessage = "Import process finished! "
                         + String.format("%,d", importComponent.getSaveCount()) + " data (" + importComponent.getEntityList().size() + " entity) have been saved. "
-                        + "Process completed in " + Time.calculateTime((long) stopWatch.getLastTaskInfo().getTimeSeconds());
+                        + "Process completed in " + timeService.calculateTime((long) stopWatch.getLastTaskInfo().getTimeSeconds());
                 Logger.info(logMessage);
                 importInit.setStatus(IMPORT_STATUS_SUCCEED);
             } else {

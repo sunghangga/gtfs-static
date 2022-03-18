@@ -4,7 +4,6 @@ import com.maestronic.gtfs.entity.PassengerStopAssignment;
 import com.maestronic.gtfs.repository.PassengerStopAssignmentRepository;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.Logger;
-import com.maestronic.gtfs.util.Time;
 import nl.connekt.bison.psa.Userstopcodedata;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,8 @@ public class PassengerStopAssignmentService {
     private int batchSize;
     @Autowired
     private PassengerStopAssignmentRepository passengerStopAssignmentRepository;
+    @Autowired
+    private TimeService timeService;
 
     private Session getSession() {
         if (session == null) session = entityManager.unwrap(Session.class);
@@ -51,8 +52,8 @@ public class PassengerStopAssignmentService {
                             record.getQuaycode(),
                             userStopCode.getDataownercode(),
                             userStopCode.getUserstopcode(),
-                            userStopCode.getValidfrom() == null ? null : Time.strToLocalDateTime(userStopCode.getValidfrom()),
-                            userStopCode.getValidthru() == null ? null : Time.strToLocalDateTime(userStopCode.getValidthru())
+                            userStopCode.getValidfrom() == null ? null : timeService.strToLocalDateTime(userStopCode.getValidfrom()),
+                            userStopCode.getValidthru() == null ? null : timeService.strToLocalDateTime(userStopCode.getValidthru())
                     );
 
                     session.save(passengerStopAssignment);

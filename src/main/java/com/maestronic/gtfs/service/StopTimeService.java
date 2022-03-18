@@ -4,7 +4,6 @@ import com.maestronic.gtfs.entity.StopTime;
 import com.maestronic.gtfs.repository.StopTimeRepository;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.Logger;
-import com.maestronic.gtfs.util.Time;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -28,6 +27,8 @@ public class StopTimeService {
     private int batchSize;
     @Autowired
     private StopTimeRepository stopTimeRepository;
+    @Autowired
+    private TimeService timeService;
 
     private Session getSession() {
         if (session == null) session = entityManager.unwrap(Session.class);
@@ -55,8 +56,8 @@ public class StopTimeService {
             for (CSVRecord csvRecord : csvParser) {
                 StopTime stopTime = new StopTime(
                         csvRecord.get("trip_id"),
-                        Time.strTimeToDuration(csvRecord.get("arrival_time")),
-                        Time.strTimeToDuration(csvRecord.get("departure_time")),
+                        timeService.strTimeToDuration(csvRecord.get("arrival_time")),
+                        timeService.strTimeToDuration(csvRecord.get("departure_time")),
                         csvRecord.get("stop_id"),
                         Integer.parseInt(csvRecord.get("stop_sequence")),
                         csvRecord.get("stop_headsign"),

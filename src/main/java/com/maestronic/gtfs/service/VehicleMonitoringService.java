@@ -9,6 +9,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -27,9 +28,13 @@ public class VehicleMonitoringService implements GlobalVariable {
     @Autowired
     ResourceLoader resourceLoader;
     @Autowired
+    private TimeService timeService;
+    @Autowired
     private VehicleMonitoringRepository vehicleMonitoringRepository;
     private MonitoredCall monitoredCall;
     private Location location;
+    @Value("${timezone}")
+    private String timezone;
 
     private String mapFirstRow(VehicleMonitoring row) {
         location = new Location(row.getPositionLongitude(), row.getPositionLatitude());
@@ -39,11 +44,11 @@ public class VehicleMonitoringService implements GlobalVariable {
                 row.getStopSequence(),
                 row.getCurrentStatus(),
                 row.getCurrentStatus().equals(STOPPED_AT) ? location : new Location(),
-                Time.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
-                Time.unixToZoneDateTime(row.getExpectedArrivalTime()),
+                timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
+                timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                 row.getArrivalDelay(),
-                Time.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
-                Time.unixToZoneDateTime(row.getExpectedDepartureTime()),
+                timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
+                timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
                 row.getDepartureDelay()
         );
 
@@ -78,7 +83,7 @@ public class VehicleMonitoringService implements GlobalVariable {
                         onwardCalls
                 );
                 VehicleActivity vehicleActivity = new VehicleActivity(
-                        Time.unixToZoneDateTime(resultList.get(i-1).getTimestamp()),
+                        timeService.unixToZoneDateTime(resultList.get(i-1).getTimestamp()),
                         monitoredVehicleJourney
                 );
                 vehicleMonitoringDelivery.getVehicleActivities().add(vehicleActivity);
@@ -90,11 +95,11 @@ public class VehicleMonitoringService implements GlobalVariable {
                         row.getStopSequence(),
                         row.getCurrentStatus(),
                         row.getCurrentStatus().equals(STOPPED_AT) ? location : new Location(),
-                        Time.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
-                        Time.unixToZoneDateTime(row.getExpectedArrivalTime()),
+                        timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
+                        timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                         row.getArrivalDelay(),
-                        Time.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
-                        Time.unixToZoneDateTime(row.getExpectedDepartureTime()),
+                        timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
+                        timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
                         row.getDepartureDelay()
                 );
 
@@ -108,11 +113,11 @@ public class VehicleMonitoringService implements GlobalVariable {
                     row.getStopId(),
                     row.getStopName(),
                     row.getStopSequence(),
-                    Time.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
-                    Time.unixToZoneDateTime(row.getExpectedArrivalTime()),
+                    timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
+                    timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                     row.getArrivalDelay(),
-                    Time.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
-                    Time.unixToZoneDateTime(row.getExpectedDepartureTime()),
+                    timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
+                    timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
                     row.getDepartureDelay()
             );
             onwardCalls.getOnwardCalls().add(onwardCall);
@@ -136,14 +141,14 @@ public class VehicleMonitoringService implements GlobalVariable {
                 onwardCalls
         );
         VehicleActivity vehicleActivity = new VehicleActivity(
-                Time.unixToZoneDateTime(row.getTimestamp()),
+                timeService.unixToZoneDateTime(row.getTimestamp()),
                 monitoredVehicleJourney
         );
         vehicleMonitoringDelivery.getVehicleActivities().add(vehicleActivity);
 
         // Add to root element
         ServiceDelivery serviceDelivery = new ServiceDelivery();
-        serviceDelivery.setResponseTimestamp(Time.localDateTimeZone());
+        serviceDelivery.setResponseTimestamp(timeService.localDateTimeZone());
         serviceDelivery.setProducerRef(resultList.get(0).getAgencyId());
         serviceDelivery.setStatus(true);
         serviceDelivery.getVehicleMonitoringDeliveries().add(vehicleMonitoringDelivery);
@@ -158,11 +163,12 @@ public class VehicleMonitoringService implements GlobalVariable {
     public String getRealVehicleMonitoringXml(String agency_id, String vehicle_id) {
         List<VehicleMonitoring> resultList;
         if (vehicle_id == null) {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id);
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timezone);
         } else {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
                     agency_id,
-                    vehicle_id);
+                    vehicle_id,
+                    timezone);
         }
 
         if (resultList == null || resultList.size() <= 0) {
@@ -175,11 +181,12 @@ public class VehicleMonitoringService implements GlobalVariable {
     public String getRealVehicleMonitoringJson(String agency_id, String vehicle_id) throws Exception {
         List<VehicleMonitoring> resultList;
         if (vehicle_id == null) {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id);
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timezone);
         } else {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
                     agency_id,
-                    vehicle_id);
+                    vehicle_id,
+                    timezone);
         }
 
         if (resultList == null || resultList.size() <= 0) {
@@ -196,10 +203,10 @@ public class VehicleMonitoringService implements GlobalVariable {
 
             long unixTime = Instant.now().getEpochSecond();
             long timestamp = unixTime;
-            int tripStartDate = Time.localDateZoneGTFS();
+            int tripStartDate = timeService.localDateZoneGTFS();
             LocalTime time;
             for (CSVRecord csvRecord : csvRecords) {
-                time = Time.unixToTime(unixTime);
+                time = timeService.unixToTime(unixTime);
                 csvPrinter.printRecord(
                         csvRecord.get("vehicle_label"),
                         tripStartDate,
@@ -246,7 +253,7 @@ public class VehicleMonitoringService implements GlobalVariable {
             Iterable<CSVRecord> csvRecords = csvParser.getRecords();
             List<VehicleMonitoring> listVehicleMonitoring = new ArrayList<>();
             String trip = "";
-            LocalTime nowTimeNl = Time.timeZone();
+            LocalTime nowTimeNl = timeService.timeZone();
             long unixTime = Instant.now().getEpochSecond();
 
             for (CSVRecord csvRecord : csvRecords) {
@@ -276,14 +283,14 @@ public class VehicleMonitoringService implements GlobalVariable {
                             csvRecord.get("first_stop_name"),
                             csvRecord.get("last_stop_id"),
                             csvRecord.get("last_stop_name"),
-                            Time.strTimeToDuration(csvRecord.get("aimed_departure_time")),
+                            timeService.strTimeToDuration(csvRecord.get("aimed_departure_time")),
                             Integer.parseInt(csvRecord.get("departure_delay")),
                             // Expected departure time
-                            Time.concatDateTime(csvRecord.get("aimed_departure_time")) + Integer.parseInt(csvRecord.get("departure_delay")),
-                            Time.strTimeToDuration(csvRecord.get("aimed_arrival_time")),
+                            timeService.concatDateTime(csvRecord.get("aimed_departure_time")) + Integer.parseInt(csvRecord.get("departure_delay")),
+                            timeService.strTimeToDuration(csvRecord.get("aimed_arrival_time")),
                             Integer.parseInt(csvRecord.get("arrival_delay")),
                             // Expected arrival time
-                            Time.concatDateTime(csvRecord.get("aimed_arrival_time")) + Integer.parseInt(csvRecord.get("arrival_delay")),
+                            timeService.concatDateTime(csvRecord.get("aimed_arrival_time")) + Integer.parseInt(csvRecord.get("arrival_delay")),
                             Integer.parseInt(csvRecord.get("direction_id")),
                             csvRecord.get("current_status"),
                             unixTime
