@@ -125,23 +125,23 @@ public class VehicleMonitoringService implements GlobalVariable {
 
         // Insert last value in MonitoredVehicleJourney
         MonitoredVehicleJourney monitoredVehicleJourney = new MonitoredVehicleJourney(
-                row.getRouteId(),
-                row.getRouteLongName(),
-                GlobalHelper.directionName(row.getDirectionId()),
-                row.getTripId(),
-                row.getTripHeadSign(),
-                row.getAgencyId(),
-                row.getFirstStopId(),
-                row.getFirstStopName(),
-                row.getLastStopId(),
-                row.getLastStopName(),
+                resultList.get(0).getRouteId(),
+                resultList.get(0).getRouteLongName(),
+                GlobalHelper.directionName(resultList.get(0).getDirectionId()),
+                resultList.get(0).getTripId(),
+                resultList.get(0).getTripHeadSign(),
+                resultList.get(0).getAgencyId(),
+                resultList.get(0).getFirstStopId(),
+                resultList.get(0).getFirstStopName(),
+                resultList.get(0).getLastStopId(),
+                resultList.get(0).getLastStopName(),
                 location,
-                row.getVehicleLabel(),
+                resultList.get(0).getVehicleLabel(),
                 monitoredCall,
                 onwardCalls
         );
         VehicleActivity vehicleActivity = new VehicleActivity(
-                timeService.unixToZoneDateTime(row.getTimestamp()),
+                timeService.unixToZoneDateTime(resultList.get(0).getTimestamp()),
                 monitoredVehicleJourney
         );
         vehicleMonitoringDelivery.getVehicleActivities().add(vehicleActivity);
