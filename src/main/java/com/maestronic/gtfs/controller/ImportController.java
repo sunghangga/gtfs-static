@@ -8,6 +8,7 @@ import com.maestronic.gtfs.mapclass.Gtfs;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.ResponseMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

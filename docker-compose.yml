@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  gtfs-static:
+    container_name: gtfs-static
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gtfs-static:latest
+    ports:
+      - "3001:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://gtfs-db:5432/gtfs_via
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - FILE_UPLOAD_DIR_GTFS=/tmp/GTFS/gtfs_upload/
+      - FILE_UPLOAD_DIR_CHB=/tmp/CHB/chb_upload/
+      - FILE_UPLOAD_DIR_PSA=/tmp/PSA/psa_upload/
+
+  gtfs-db:
+    container_name: gtfs-db
+    image: postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gtfs_via
+    volumes:
+      - ./database/gtfs_v2.0.0.sql:/docker-entrypoint-initdb.d/gtfs_via.sql

@@ -6,6 +6,23 @@ All notable changes to this application will be documented in this file.
 
 - This application used for import GTFS data to the database and provide API.
 
+## [2.0.0] - 2022-03-21
+
+### **GTFS**
+
+#### Added
+
+- Docker running application option
+
+#### Updated
+
+- Improve query performance of GTFS Vehicle Monitoring API
+- Improve query performance of GTFS Connection Timetable API
+
+#### Fixed
+
+- Error response XML for GTFS Vehicle Monitoring API
+
 ## [1.0.0] - 2022-01-01
 
 ### **GTFS**

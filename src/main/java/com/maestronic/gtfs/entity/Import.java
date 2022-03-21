@@ -60,24 +60,4 @@ public class Import {
         this.updatedAt = updatedAt;
         this.releaseDate = releaseDate;
     }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getTaskName() {
-        return taskName;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 }
