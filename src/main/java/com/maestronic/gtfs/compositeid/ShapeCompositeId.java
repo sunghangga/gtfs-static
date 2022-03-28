@@ -1,22 +1,16 @@
 package com.maestronic.gtfs.compositeid;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class ShapeCompositeId implements Serializable {
 
     private String shapeId;
     private int shapePtSequence;
-
-    public ShapeCompositeId() {
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
 }

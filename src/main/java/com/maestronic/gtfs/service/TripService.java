@@ -49,7 +49,7 @@ public class TripService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            tripRepository.deleteAllData();
+//            tripRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 Trip trip = new Trip(
@@ -67,7 +67,7 @@ public class TripService {
                         csvRecord.get("bikes_allowed").isEmpty() ? null : Integer.parseInt(csvRecord.get("bikes_allowed"))
                 );
 
-                session.save(trip);
+                session.saveOrUpdate(trip);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

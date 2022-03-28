@@ -1,12 +1,14 @@
 package com.maestronic.gtfs.entity;
 
-import com.maestronic.gtfs.compositeid.FareAttributesCompositeId;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 
+@Data
 @Entity
-@IdClass(FareAttributesCompositeId.class)
+@NoArgsConstructor
 @Table(name = FareAttributes.TABLE_NAME)
 public class FareAttributes {
 
@@ -28,15 +30,11 @@ public class FareAttributes {
     @Column(name = "transfers")
     private Integer transfers;
 
-    @Id
     @Column(name = "agency_id")
     private String agencyId;
 
     @Column(name = "transfer_duration")
     private Integer transferDuration;
-
-    public FareAttributes() {
-    }
 
     public FareAttributes(String fareId, BigDecimal price, String currencyType, int paymentMethod, Integer transfers, String agencyId, Integer transferDuration) {
         this.fareId = fareId;

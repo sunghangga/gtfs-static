@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AgencyRepository extends JpaRepository<Agency, Integer> {
+public interface AgencyRepository extends JpaRepository<Agency, String> {
     @Modifying
     @Query(value = "TRUNCATE TABLE agency CASCADE", nativeQuery = true)
     void deleteAllData();

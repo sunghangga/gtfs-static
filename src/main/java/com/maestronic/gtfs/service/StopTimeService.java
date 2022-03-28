@@ -51,7 +51,7 @@ public class StopTimeService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            stopTimeRepository.deleteAllData();
+//            stopTimeRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 StopTime stopTime = new StopTime(
@@ -70,7 +70,7 @@ public class StopTimeService {
                         Integer.parseInt(csvRecord.get("timepoint"))
                 );
 
-                session.save(stopTime);
+                session.saveOrUpdate(stopTime);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

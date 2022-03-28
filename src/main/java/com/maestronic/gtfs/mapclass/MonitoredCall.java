@@ -20,6 +20,8 @@ public class MonitoredCall implements Serializable {
     private String vehicleStopStatus;
     @XmlElement(name = "VehicleLocationAtStop")
     private Location vehicleLocationAtStop;
+    @XmlElement(name = "WheelchairBoarding")
+    private int wheelchairBoarding;
     @XmlElement(name = "AimedArrivalTime", type = String.class)
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
@@ -41,12 +43,13 @@ public class MonitoredCall implements Serializable {
     @XmlElement(name = "DepartureDelay")
     private int departureDelay;
 
-    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
+    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, int wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
         this.vehicleStopStatus = vehicleStopStatus;
         this.vehicleLocationAtStop = vehicleLocationAtStop;
+        this.wheelchairBoarding = wheelchairBoarding;
         this.aimedArrivalTime = aimedArrivalTime;
         this.expectedArrivalTime = expectedArrivalTime;
         this.arrivalDelay = arrivalDelay;

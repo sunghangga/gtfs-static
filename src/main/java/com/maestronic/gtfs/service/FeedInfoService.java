@@ -49,7 +49,7 @@ public class FeedInfoService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all row in table
-            feedInfoRepository.deleteAllData();
+//            feedInfoRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 FeedInfo feedInfo = new FeedInfo(
@@ -64,7 +64,7 @@ public class FeedInfoService {
                         csvParser.getHeaderMap().containsKey("feed_contact_url") ? csvRecord.get("feed_contact_url") : ""
                 );
 
-                session.save(feedInfo);
+                session.saveOrUpdate(feedInfo);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

@@ -9,10 +9,6 @@ public class Agency {
     public static final String TABLE_NAME= "agency";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private int id;
-
     @Column(name = "agency_id")
     private String agencyId;
 
@@ -49,13 +45,5 @@ public class Agency {
         this.agencyPhone = agencyPhone;
         this.agencyFareUrl = agencyFareUrl;
         this.agencyEmail = agencyEmail;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 }

@@ -14,7 +14,6 @@ import java.util.List;
 public interface ConnectionTimetableRepository extends JpaRepository<ConnectionTimetable, ConnectionTimetableCompositeId> {
 
     @Modifying
-    @Query(value = "SELECT * FROM connection_timetable(:stop_id, :timezone)", nativeQuery = true)
-    List<ConnectionTimetable> findConnectionTimetableByParam(@Param("stop_id") String stop_id,
-                                                             @Param("timezone") String timezone);
+    @Query(value = "SELECT * FROM connection_timetable(:stop_id)", nativeQuery = true)
+    List<ConnectionTimetable> findConnectionTimetableByParam(@Param("stop_id") String stop_id);
 }

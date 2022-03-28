@@ -11,7 +11,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -25,8 +24,6 @@ import java.util.List;
 @Service
 public class VehicleMonitoringService implements GlobalVariable {
 
-    @Autowired
-    ResourceLoader resourceLoader;
     @Autowired
     private TimeService timeService;
     @Autowired
@@ -44,6 +41,7 @@ public class VehicleMonitoringService implements GlobalVariable {
                 row.getStopSequence(),
                 row.getCurrentStatus(),
                 row.getCurrentStatus().equals(STOPPED_AT) ? location : new Location(),
+                row.getWheelchairBoarding(),
                 timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
                 timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                 row.getArrivalDelay(),
@@ -95,6 +93,7 @@ public class VehicleMonitoringService implements GlobalVariable {
                         row.getStopSequence(),
                         row.getCurrentStatus(),
                         row.getCurrentStatus().equals(STOPPED_AT) ? location : new Location(),
+                        row.getWheelchairBoarding(),
                         timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
                         timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                         row.getArrivalDelay(),
@@ -113,6 +112,7 @@ public class VehicleMonitoringService implements GlobalVariable {
                     row.getStopId(),
                     row.getStopName(),
                     row.getStopSequence(),
+                    row.getWheelchairBoarding(),
                     timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
                     timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                     row.getArrivalDelay(),
@@ -163,12 +163,11 @@ public class VehicleMonitoringService implements GlobalVariable {
     public String getRealVehicleMonitoringXml(String agency_id, String vehicle_id) {
         List<VehicleMonitoring> resultList;
         if (vehicle_id == null) {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timezone);
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id);
         } else {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
                     agency_id,
-                    vehicle_id,
-                    timezone);
+                    vehicle_id);
         }
 
         if (resultList == null || resultList.size() <= 0) {
@@ -181,12 +180,11 @@ public class VehicleMonitoringService implements GlobalVariable {
     public String getRealVehicleMonitoringJson(String agency_id, String vehicle_id) throws Exception {
         List<VehicleMonitoring> resultList;
         if (vehicle_id == null) {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timezone);
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id);
         } else {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
                     agency_id,
-                    vehicle_id,
-                    timezone);
+                    vehicle_id);
         }
 
         if (resultList == null || resultList.size() <= 0) {
@@ -283,6 +281,7 @@ public class VehicleMonitoringService implements GlobalVariable {
                             csvRecord.get("first_stop_name"),
                             csvRecord.get("last_stop_id"),
                             csvRecord.get("last_stop_name"),
+                            0,
                             timeService.strTimeToDuration(csvRecord.get("aimed_departure_time")),
                             Integer.parseInt(csvRecord.get("departure_delay")),
                             // Expected departure time

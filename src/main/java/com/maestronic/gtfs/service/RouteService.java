@@ -49,7 +49,7 @@ public class RouteService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            routeRepository.deleteAllData();
+//            routeRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 Route route = new Route(
@@ -67,7 +67,7 @@ public class RouteService {
                         csvParser.getHeaderMap().containsKey("continuous_drop_off") ? Integer.parseInt(csvRecord.get("continuous_drop_off")) : null
                 );
 
-                session.save(route);
+                session.saveOrUpdate(route);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

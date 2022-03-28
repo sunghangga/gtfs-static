@@ -48,7 +48,7 @@ public class AgencyService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            agencyRepository.deleteAllData();
+//            agencyRepository.deleteAllData();
 
             // Insert new data
             for (CSVRecord csvRecord : csvParser) {
@@ -63,7 +63,7 @@ public class AgencyService {
                         csvParser.getHeaderMap().containsKey("agency_email") ? csvRecord.get("agency_email") : ""
                 );
 
-                session.save(agency);
+                session.saveOrUpdate(agency);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

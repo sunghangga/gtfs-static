@@ -1,0 +1,168 @@
+package com.maestronic.gtfs.service;
+
+import com.maestronic.gtfs.entity.VehicleMonitoring;
+import com.maestronic.gtfs.mapclass.*;
+import com.maestronic.gtfs.repository.VehicleMonitoringRepository;
+import com.maestronic.gtfs.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class VehicleConnectionService implements GlobalVariable {
+
+    @Autowired
+    private TimeService timeService;
+    @Autowired
+    private VehicleMonitoringRepository vehicleMonitoringRepository;
+    private MonitoredCall monitoredCall;
+    private Location location;
+    @Value("${timezone}")
+    private String timezone;
+
+    private String mapFirstRow(VehicleMonitoring row) {
+        location = new Location(row.getPositionLongitude(), row.getPositionLatitude());
+        monitoredCall = new MonitoredCall(
+                row.getStopId(),
+                row.getStopName(),
+                row.getStopSequence(),
+                row.getCurrentStatus(),
+                row.getCurrentStatus().equals(STOPPED_AT) ? location : new Location(),
+                row.getWheelchairBoarding(),
+                timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
+                timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
+                row.getArrivalDelay(),
+                timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
+                timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
+                row.getDepartureDelay()
+        );
+
+        return row.getVehicleLabel();
+    }
+
+    public Gtfs getDataVehicleMonitoring(List<VehicleMonitoring> resultList) {
+        // Initialize object
+        OnwardCalls onwardCalls = new OnwardCalls();
+        VehicleMonitoringDelivery vehicleMonitoringDelivery = new VehicleMonitoringDelivery();
+        String vehicleLabel = mapFirstRow(resultList.get(0));
+        VehicleMonitoring row = new VehicleMonitoring();
+
+        for (int i = 1; i < resultList.size(); i++) {
+            row = resultList.get(i);
+            // Check for different vehicle
+            if (!vehicleLabel.equals(row.getVehicleLabel())) {
+                MonitoredVehicleJourney monitoredVehicleJourney = new MonitoredVehicleJourney(
+                        resultList.get(i-1).getRouteId(),
+                        resultList.get(i-1).getRouteLongName(),
+                        GlobalHelper.directionName(resultList.get(i-1).getDirectionId()),
+                        resultList.get(i-1).getTripId(),
+                        resultList.get(i-1).getTripHeadSign(),
+                        resultList.get(i-1).getAgencyId(),
+                        resultList.get(i-1).getFirstStopId(),
+                        resultList.get(i-1).getFirstStopName(),
+                        resultList.get(i-1).getLastStopId(),
+                        resultList.get(i-1).getLastStopName(),
+                        location,
+                        resultList.get(i-1).getVehicleLabel(),
+                        monitoredCall,
+                        onwardCalls
+                );
+                VehicleActivity vehicleActivity = new VehicleActivity(
+                        timeService.unixToZoneDateTime(resultList.get(i-1).getTimestamp()),
+                        monitoredVehicleJourney
+                );
+                vehicleMonitoringDelivery.getVehicleActivities().add(vehicleActivity);
+
+                location = new Location(row.getPositionLongitude(), row.getPositionLatitude());
+                monitoredCall = new MonitoredCall(
+                        row.getStopId(),
+                        row.getStopName(),
+                        row.getStopSequence(),
+                        row.getCurrentStatus(),
+                        row.getCurrentStatus().equals(STOPPED_AT) ? location : new Location(),
+                        row.getWheelchairBoarding(),
+                        timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
+                        timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
+                        row.getArrivalDelay(),
+                        timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
+                        timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
+                        row.getDepartureDelay()
+                );
+
+                // Re-initial object
+                onwardCalls = new OnwardCalls();
+                vehicleLabel = row.getVehicleLabel();
+                continue;
+            }
+
+            OnwardCall onwardCall = new OnwardCall(
+                    row.getStopId(),
+                    row.getStopName(),
+                    row.getStopSequence(),
+                    row.getWheelchairBoarding(),
+                    timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
+                    timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
+                    row.getArrivalDelay(),
+                    timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
+                    timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
+                    row.getDepartureDelay()
+            );
+            onwardCalls.getOnwardCalls().add(onwardCall);
+        }
+
+        // Insert last value in MonitoredVehicleJourney
+        MonitoredVehicleJourney monitoredVehicleJourney = new MonitoredVehicleJourney(
+                resultList.get(0).getRouteId(),
+                resultList.get(0).getRouteLongName(),
+                GlobalHelper.directionName(resultList.get(0).getDirectionId()),
+                resultList.get(0).getTripId(),
+                resultList.get(0).getTripHeadSign(),
+                resultList.get(0).getAgencyId(),
+                resultList.get(0).getFirstStopId(),
+                resultList.get(0).getFirstStopName(),
+                resultList.get(0).getLastStopId(),
+                resultList.get(0).getLastStopName(),
+                location,
+                resultList.get(0).getVehicleLabel(),
+                monitoredCall,
+                onwardCalls
+        );
+        VehicleActivity vehicleActivity = new VehicleActivity(
+                timeService.unixToZoneDateTime(resultList.get(0).getTimestamp()),
+                monitoredVehicleJourney
+        );
+        vehicleMonitoringDelivery.getVehicleActivities().add(vehicleActivity);
+
+        // Add to root element
+        ServiceDelivery serviceDelivery = new ServiceDelivery();
+        serviceDelivery.setResponseTimestamp(timeService.localDateTimeZone());
+        serviceDelivery.setProducerRef(resultList.get(0).getAgencyId());
+        serviceDelivery.setStatus(true);
+        serviceDelivery.getVehicleMonitoringDeliveries().add(vehicleMonitoringDelivery);
+
+        Gtfs gtfs = new Gtfs();
+        gtfs.setVersion(gtfs.getVersion());
+        gtfs.setServiceDelivery(serviceDelivery);
+
+        return gtfs;
+    }
+
+    public String getRealVehicleMonitoringJson(String agency_id, String vehicle_id) throws Exception {
+        List<VehicleMonitoring> resultList;
+        if (vehicle_id == null) {
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id);
+        } else {
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
+                    agency_id,
+                    vehicle_id);
+        }
+
+        if (resultList == null || resultList.size() <= 0) {
+            return null;
+        }
+        Gtfs gtfs = getDataVehicleMonitoring(resultList);
+        return GtfsJson.toJson(gtfs);
+    }
+}

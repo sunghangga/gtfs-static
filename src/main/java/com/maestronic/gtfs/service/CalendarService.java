@@ -49,7 +49,7 @@ public class CalendarService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            calendarRepository.deleteAllData();
+//            calendarRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 Calendar calendar = new Calendar(
@@ -65,7 +65,7 @@ public class CalendarService {
                         Integer.parseInt(csvRecord.get("end_date"))
                 );
 
-                session.save(calendar);
+                session.saveOrUpdate(calendar);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

@@ -7,12 +7,12 @@ public class ImportComponent {
 
     private int saveCount;
     private List<String> entityList;
-    private Map<String, Object> dataList;
+    private List<Object> dataList;
 
     public ImportComponent() {
     }
 
-    public ImportComponent(int saveCount, List<String> entityList, Map<String, Object> dataList) {
+    public ImportComponent(int saveCount, List<String> entityList, List<Object> dataList) {
         this.saveCount = saveCount;
         this.entityList = entityList;
         this.dataList = dataList;
@@ -28,5 +28,9 @@ public class ImportComponent {
 
     public List<String> getEntityList() {
         return entityList;
+    }
+
+    public List<Object> getDataList() {
+        return dataList;
     }
 }

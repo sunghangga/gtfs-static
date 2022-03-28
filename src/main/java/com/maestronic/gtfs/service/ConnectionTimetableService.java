@@ -74,7 +74,7 @@ public class ConnectionTimetableService implements GlobalVariable {
     }
 
     public String getRealConnectionTimetableXml(String stop_id) {
-        List<ConnectionTimetable> resultList = connectionTimetableRepository.findConnectionTimetableByParam(stop_id, timezone);
+        List<ConnectionTimetable> resultList = connectionTimetableRepository.findConnectionTimetableByParam(stop_id);
         if (resultList == null || resultList.size() <= 0) {
             return null;
         }
@@ -83,7 +83,7 @@ public class ConnectionTimetableService implements GlobalVariable {
     }
 
     public String getRealConnectionTimetableJson(String stop_id) throws Exception {
-        List<ConnectionTimetable> resultList = connectionTimetableRepository.findConnectionTimetableByParam(stop_id, timezone);
+        List<ConnectionTimetable> resultList = connectionTimetableRepository.findConnectionTimetableByParam(stop_id);
         if (resultList == null || resultList.size() <= 0) {
             return null;
         }

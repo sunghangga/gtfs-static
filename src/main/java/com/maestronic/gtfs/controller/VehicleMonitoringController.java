@@ -1,6 +1,7 @@
 package com.maestronic.gtfs.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.maestronic.gtfs.service.VehicleService;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.ResponseMessage;
 import com.maestronic.gtfs.service.VehicleMonitoringService;
@@ -13,8 +14,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 @CrossOrigin
 @RestController
@@ -22,6 +22,8 @@ public class VehicleMonitoringController {
 
     @Autowired
     private VehicleMonitoringService vehicleMonitoringService;
+    @Autowired
+    private VehicleService vehicleService;
     private HttpHeaders headers;
 
     @GetMapping(path = "api/gtfs/vehiclemonitoring", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
@@ -198,6 +200,52 @@ public class VehicleMonitoringController {
             headers.setContentType(MediaType.APPLICATION_XML);
             return new ResponseEntity<>(
                     ResponseMessage.missingRequestParameterError(HttpStatus.BAD_REQUEST.value(), "Parameter 'format' must have a value among: xml and json."),
+                    headers,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    @GetMapping(path = "api/gtfs/vehicle-positions", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getVehiclePositions(@RequestParam(required = false) String agency_id,
+                                                      @RequestParam(required = false) String vehicle_id,
+                                                      @RequestParam(required = false) String trip_id) {
+
+        // Set headers
+        headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        try {
+            List<Map<String, Object>> response = vehicleService.getVehiclePositions(agency_id, vehicle_id, trip_id);
+
+            if (response == null) {
+                return new ResponseEntity<>(
+                        ResponseMessage.retrieveDataJson(
+                                HttpStatus.OK.value(),
+                                "No data available.",
+                                new ArrayList()
+                        ),
+                        headers,
+                        HttpStatus.OK
+                );
+            }
+
+            return new ResponseEntity<>(
+                    ResponseMessage.retrieveDataJson(
+                            HttpStatus.OK.value(),
+                            "Retrieved data successfully.",
+                            response
+                    ),
+                    headers,
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    ResponseMessage.exceptionErrorJson(
+                            HttpStatus.BAD_REQUEST.value(),
+                            "Something went wrong."
+                    ),
                     headers,
                     HttpStatus.BAD_REQUEST
             );

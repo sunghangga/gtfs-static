@@ -1,21 +1,21 @@
 package com.maestronic.gtfs.entity;
 
+import com.maestronic.gtfs.compositeid.TransferCompositeId;
+
 import javax.persistence.*;
 
 @Entity
+@IdClass(TransferCompositeId.class)
 @Table(name = Transfer.TABLE_NAME)
 public class Transfer {
 
     public static final String TABLE_NAME = "transfers";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private int id;
-
     @Column(name = "from_stop_id")
     private String fromStopId;
 
+    @Id
     @Column(name = "to_stop_id")
     private String toStopId;
 
@@ -25,9 +25,11 @@ public class Transfer {
     @Column(name = "to_route_id")
     private String toRouteId;
 
+    @Id
     @Column(name = "from_trip_id")
     private String fromTripId;
 
+    @Id
     @Column(name = "to_trip_id")
     private String toTripId;
 
@@ -49,13 +51,5 @@ public class Transfer {
         this.toTripId = toTripId;
         this.transferType = transferType;
         this.minTransferTime = minTransferTime;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 }

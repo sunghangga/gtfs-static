@@ -50,7 +50,7 @@ public class FareAttributesService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            fareAttributesRepository.deleteAllData();
+//            fareAttributesRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 FareAttributes fareAttributes = new FareAttributes(
@@ -63,7 +63,7 @@ public class FareAttributesService {
                         csvRecord.get("transfer_duration").isEmpty() ? null : Integer.parseInt(csvRecord.get("transfer_duration"))
                 );
 
-                session.save(fareAttributes);
+                session.saveOrUpdate(fareAttributes);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

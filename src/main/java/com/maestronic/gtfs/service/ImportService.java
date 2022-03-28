@@ -439,7 +439,7 @@ public class ImportService implements GlobalVariable {
         try {
             // Initialize variable
             destDirGtfs = new java.io.File(destDirGtfs).getAbsolutePath() + java.io.File.separator;
-            importComponent = new ImportComponent(0, new ArrayList<>(), new HashMap<>());
+            importComponent = new ImportComponent(0, new ArrayList<>(), new ArrayList<>());
             Boolean procStatus;
             ArrayList<String> listPath;
             boolean isValid;
@@ -508,7 +508,7 @@ public class ImportService implements GlobalVariable {
         try {
             // Initialize variable
             destDirChb = new java.io.File(destDirChb).getAbsolutePath() + java.io.File.separator;
-            importComponent = new ImportComponent(0, new ArrayList<>(), new HashMap<>());
+            importComponent = new ImportComponent(0, new ArrayList<>(), new ArrayList<>());
             Boolean procStatus;
             ArrayList<String> listPath;
 
@@ -576,7 +576,7 @@ public class ImportService implements GlobalVariable {
         try {
             // Initialize variable
             destDirPsa = new java.io.File(destDirPsa).getAbsolutePath() + java.io.File.separator;
-            importComponent = new ImportComponent(0, new ArrayList<>(), new HashMap<>());
+            importComponent = new ImportComponent(0, new ArrayList<>(), new ArrayList<>());
             Boolean procStatus;
             ArrayList<String> listPath;
 

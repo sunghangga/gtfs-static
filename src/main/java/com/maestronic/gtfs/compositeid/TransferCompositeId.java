@@ -9,8 +9,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class CalendarDateCompositeId implements Serializable {
+public class TransferCompositeId implements Serializable {
 
-    private String serviceId;
-    private Integer date;
+    private String fromStopId;
+    private String toStopId;
+    private String fromTripId;
+    private String toTripId;
 }

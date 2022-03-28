@@ -49,7 +49,7 @@ public class FareRulesService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            fareRulesRepository.deleteAllData();
+//            fareRulesRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 FareRules fareRules = new FareRules(
@@ -60,7 +60,7 @@ public class FareRulesService {
                         csvRecord.get("contains_id")
                 );
 
-                session.save(fareRules);
+                session.saveOrUpdate(fareRules);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

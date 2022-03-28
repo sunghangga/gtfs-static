@@ -49,7 +49,7 @@ public class ShapeService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            shapeRepository.deleteAllData();
+//            shapeRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 Shape shape = new Shape(
@@ -60,7 +60,7 @@ public class ShapeService {
                         Double.parseDouble(csvRecord.get("shape_dist_traveled"))
                 );
 
-                session.save(shape);
+                session.saveOrUpdate(shape);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

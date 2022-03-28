@@ -49,7 +49,7 @@ public class TransferService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            transferRepository.deleteAllData();
+//            transferRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 Transfer transfer = new Transfer(
@@ -63,7 +63,7 @@ public class TransferService {
                         csvParser.getHeaderMap().containsKey("min_transfer_time") ? (csvRecord.get("min_transfer_time").isEmpty() ? null : Integer.parseInt(csvRecord.get("min_transfer_time"))) : null
                 );
 
-                session.save(transfer);
+                session.saveOrUpdate(transfer);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

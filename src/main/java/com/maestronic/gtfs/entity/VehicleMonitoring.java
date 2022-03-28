@@ -51,6 +51,8 @@ public class VehicleMonitoring {
     private String lastStopId;
     @Column(name = "last_stop_name")
     private String lastStopName;
+    @Column(name = "wheelchair_boarding")
+    private int wheelchairBoarding;
     @Column(name = "aimed_departure_time", columnDefinition = "interval")
     private Duration aimedDepartureTime;
     @Column(name = "departure_delay")
@@ -71,7 +73,7 @@ public class VehicleMonitoring {
     public VehicleMonitoring() {
     }
 
-    public VehicleMonitoring(String agencyId, String vehicleLabel, String routeId, String tripId, int stopSequence, String tripStartDate, String tripHeadSign, String routeLongName, String stopId, double positionLatitude, double positionLongitude, String stopName, String firstStopId, String firstStopName, String lastStopId, String lastStopName, Duration aimedDepartureTime, int departureDelay, long expectedDepartureTime, Duration aimedArrivalTime, int arrivalDelay, long expectedArrivalTime, int directionId, String currentStatus, long timestamp) {
+    public VehicleMonitoring(String agencyId, String vehicleLabel, String routeId, String tripId, int stopSequence, String tripStartDate, String tripHeadSign, String routeLongName, String stopId, double positionLatitude, double positionLongitude, String stopName, String firstStopId, String firstStopName, String lastStopId, String lastStopName, int wheelchairBoarding, Duration aimedDepartureTime, int departureDelay, long expectedDepartureTime, Duration aimedArrivalTime, int arrivalDelay, long expectedArrivalTime, int directionId, String currentStatus, long timestamp) {
         this.agencyId = agencyId;
         this.vehicleLabel = vehicleLabel;
         this.routeId = routeId;
@@ -88,6 +90,7 @@ public class VehicleMonitoring {
         this.firstStopName = firstStopName;
         this.lastStopId = lastStopId;
         this.lastStopName = lastStopName;
+        this.wheelchairBoarding = wheelchairBoarding;
         this.aimedDepartureTime = aimedDepartureTime;
         this.departureDelay = departureDelay;
         this.expectedDepartureTime = expectedDepartureTime;
@@ -197,5 +200,9 @@ public class VehicleMonitoring {
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+    public int getWheelchairBoarding() {
+        return wheelchairBoarding;
     }
 }

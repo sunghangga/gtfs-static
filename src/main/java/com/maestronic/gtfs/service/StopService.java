@@ -49,7 +49,7 @@ public class StopService {
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
             // Delete all data in table
-            stopRepository.deleteAllData();
+//            stopRepository.deleteAllData();
 
             for (CSVRecord csvRecord : csvParser) {
                 Stop stop = new Stop(
@@ -70,7 +70,7 @@ public class StopService {
                         csvParser.getHeaderMap().containsKey("platform_code") ? csvRecord.get("platform_code") : ""
                 );
 
-                session.save(stop);
+                session.saveOrUpdate(stop);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);

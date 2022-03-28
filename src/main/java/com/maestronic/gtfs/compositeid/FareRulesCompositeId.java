@@ -1,7 +1,14 @@
 package com.maestronic.gtfs.compositeid;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class FareRulesCompositeId implements Serializable {
 
     private String fareId;
@@ -9,17 +16,4 @@ public class FareRulesCompositeId implements Serializable {
     private String originId;
     private String destinationId;
     private String containsId;
-
-    public FareRulesCompositeId() {
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
 }

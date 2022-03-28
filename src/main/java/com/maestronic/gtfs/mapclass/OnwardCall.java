@@ -16,11 +16,13 @@ public class OnwardCall implements Serializable {
     private String stopPointNames;
     @XmlElement(name = "StopSequence")
     private int stopSequence;
+    @XmlElement(name = "WheelchairBoarding")
+    private int wheelchairBoarding;
     @XmlElement(name = "AimedArrivalTime", type = String.class)
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
     private ZonedDateTime aimedArrivalTime;
-    @XmlElement(name = "ExpectedArrivalTime", type = String.class)
+    @XmlElement(name = "ExpectedArrivalTime", nillable = true, type = String.class)
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
     private ZonedDateTime expectedArrivalTime;
@@ -30,17 +32,18 @@ public class OnwardCall implements Serializable {
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
     private ZonedDateTime aimedDepartureTime;
-    @XmlElement(name = "ExpectedDepartureTime", type = String.class)
+    @XmlElement(name = "ExpectedDepartureTime", nillable = true, type = String.class)
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
     private ZonedDateTime expectedDepartureTime;
     @XmlElement(name = "DepartureDelay")
     private int departureDelay;
 
-    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
+    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, int wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
+        this.wheelchairBoarding = wheelchairBoarding;
         this.aimedArrivalTime = aimedArrivalTime;
         this.expectedArrivalTime = expectedArrivalTime;
         this.arrivalDelay = arrivalDelay;
