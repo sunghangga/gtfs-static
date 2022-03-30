@@ -95,6 +95,7 @@ public class VehicleMonitoringController {
                         HttpStatus.OK
                 );
             } catch (Exception e) {
+                e.printStackTrace();
                 return new ResponseEntity<>(
                         ResponseMessage.exceptionErrorJson(
                                 HttpStatus.BAD_REQUEST.value(),

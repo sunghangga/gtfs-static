@@ -22,7 +22,7 @@ public class MonitoredCall implements Serializable {
     @XmlElement(name = "VehicleLocationAtStop")
     private Location vehicleLocationAtStop;
     @XmlElement(name = "WheelchairBoarding")
-    private int wheelchairBoarding;
+    private Integer wheelchairBoarding;
     @XmlElement(name = "AimedArrivalTime", type = String.class)
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
@@ -46,7 +46,7 @@ public class MonitoredCall implements Serializable {
     @XmlElement(name = "ConnectionRoute")
     private List<ConnectionRoutes> connectionRoute;
 
-    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, int wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
+    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, Integer wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
@@ -61,7 +61,7 @@ public class MonitoredCall implements Serializable {
         this.departureDelay = departureDelay;
     }
 
-    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, int wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
+    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, Integer wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;

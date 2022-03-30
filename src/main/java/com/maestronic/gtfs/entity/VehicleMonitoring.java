@@ -1,6 +1,8 @@
 package com.maestronic.gtfs.entity;
 
 import com.maestronic.gtfs.compositeid.VehicleMonitoringCompositeId;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.Duration;
@@ -8,6 +10,8 @@ import java.time.Duration;
 @Entity
 @IdClass(VehicleMonitoringCompositeId.class)
 @Table(name = "vehicle_monitoring")
+@Data
+@NoArgsConstructor
 public class VehicleMonitoring {
 
     @Id
@@ -52,7 +56,7 @@ public class VehicleMonitoring {
     @Column(name = "last_stop_name")
     private String lastStopName;
     @Column(name = "wheelchair_boarding")
-    private int wheelchairBoarding;
+    private Integer wheelchairBoarding;
     @Column(name = "aimed_departure_time", columnDefinition = "interval")
     private Duration aimedDepartureTime;
     @Column(name = "departure_delay")
@@ -70,10 +74,7 @@ public class VehicleMonitoring {
     @Column(name = "timestamp")
     private long timestamp;
 
-    public VehicleMonitoring() {
-    }
-
-    public VehicleMonitoring(String agencyId, String vehicleLabel, String routeId, String tripId, int stopSequence, String tripStartDate, String tripHeadSign, String routeLongName, String stopId, double positionLatitude, double positionLongitude, String stopName, String firstStopId, String firstStopName, String lastStopId, String lastStopName, int wheelchairBoarding, Duration aimedDepartureTime, int departureDelay, long expectedDepartureTime, Duration aimedArrivalTime, int arrivalDelay, long expectedArrivalTime, int directionId, String currentStatus, long timestamp) {
+    public VehicleMonitoring(String agencyId, String vehicleLabel, String routeId, String tripId, int stopSequence, String tripStartDate, String tripHeadSign, String routeLongName, String stopId, double positionLatitude, double positionLongitude, String stopName, String firstStopId, String firstStopName, String lastStopId, String lastStopName, Integer wheelchairBoarding, Duration aimedDepartureTime, int departureDelay, long expectedDepartureTime, Duration aimedArrivalTime, int arrivalDelay, long expectedArrivalTime, int directionId, String currentStatus, long timestamp) {
         this.agencyId = agencyId;
         this.vehicleLabel = vehicleLabel;
         this.routeId = routeId;
@@ -100,109 +101,5 @@ public class VehicleMonitoring {
         this.directionId = directionId;
         this.currentStatus = currentStatus;
         this.timestamp = timestamp;
-    }
-
-    public String getTripStartDate() {
-        return tripStartDate;
-    }
-
-    public String getAgencyId() {
-        return agencyId;
-    }
-
-    public String getVehicleLabel() {
-        return vehicleLabel;
-    }
-
-    public String getRouteId() {
-        return routeId;
-    }
-
-    public String getTripId() {
-        return tripId;
-    }
-
-    public int getStopSequence() {
-        return stopSequence;
-    }
-
-    public String getTripHeadSign() {
-        return tripHeadSign;
-    }
-
-    public String getRouteLongName() {
-        return routeLongName;
-    }
-
-    public String getStopId() {
-        return stopId;
-    }
-
-    public double getPositionLatitude() {
-        return positionLatitude;
-    }
-
-    public double getPositionLongitude() {
-        return positionLongitude;
-    }
-
-    public String getStopName() {
-        return stopName;
-    }
-
-    public String getFirstStopId() {
-        return firstStopId;
-    }
-
-    public String getFirstStopName() {
-        return firstStopName;
-    }
-
-    public String getLastStopId() {
-        return lastStopId;
-    }
-
-    public String getLastStopName() {
-        return lastStopName;
-    }
-
-    public Duration getAimedDepartureTime() {
-        return aimedDepartureTime;
-    }
-
-    public int getDepartureDelay() {
-        return departureDelay;
-    }
-
-    public long getExpectedDepartureTime() {
-        return expectedDepartureTime;
-    }
-
-    public Duration getAimedArrivalTime() {
-        return aimedArrivalTime;
-    }
-
-    public int getArrivalDelay() {
-        return arrivalDelay;
-    }
-
-    public long getExpectedArrivalTime() {
-        return expectedArrivalTime;
-    }
-
-    public int getDirectionId() {
-        return directionId;
-    }
-
-    public String getCurrentStatus() {
-        return currentStatus;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public int getWheelchairBoarding() {
-        return wheelchairBoarding;
     }
 }

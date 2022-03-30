@@ -18,7 +18,7 @@ public class OnwardCall implements Serializable {
     @XmlElement(name = "StopSequence")
     private int stopSequence;
     @XmlElement(name = "WheelchairBoarding")
-    private int wheelchairBoarding;
+    private Integer wheelchairBoarding;
     @XmlElement(name = "AimedArrivalTime", type = String.class)
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
@@ -42,7 +42,7 @@ public class OnwardCall implements Serializable {
     @XmlElement(name = "ConnectionRoute")
     private List<ConnectionRoutes> connectionRoute;
 
-    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, int wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
+    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, Integer wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
@@ -55,7 +55,7 @@ public class OnwardCall implements Serializable {
         this.departureDelay = departureDelay;
     }
 
-    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, int wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
+    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, Integer wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
