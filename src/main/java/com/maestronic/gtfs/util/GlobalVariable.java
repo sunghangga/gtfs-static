@@ -59,6 +59,9 @@ public interface GlobalVariable {
     String SHAPES = "shapes.txt";
     String TRANSFERS = "transfers.txt";
     String FEED_INFO = "feed_info.txt";
+    String DIRECTION_NAMES_EXCEPTIONS = "direction_names_exceptions.txt";
+    String DIRECTIONS = "directions.txt";
+    String STOP_ORDER_EXCEPTIONS = "stop_order_exceptions.txt";
     String DATAOWNER = "dataowner";
     String PLACES = "places";
     String STOPPLACES = "stopplaces";

@@ -67,7 +67,7 @@ public class StopTimeService {
                         csvParser.getHeaderMap().containsKey("continuous_drop_off") ? Integer.parseInt(csvRecord.get("continuous_drop_off")) : null,
                         csvRecord.get("shape_dist_traveled").isEmpty() ? null : Double.parseDouble(csvRecord.get("shape_dist_traveled")),
                         csvParser.getHeaderMap().containsKey("fare_units_traveled") ? (csvRecord.get("fare_units_traveled").isEmpty() ? null : Double.parseDouble(csvRecord.get("fare_units_traveled"))) : null,
-                        Integer.parseInt(csvRecord.get("timepoint"))
+                        csvParser.getHeaderMap().containsKey("timepoint") ? Integer.parseInt(csvRecord.get("timepoint")) : null
                 );
 
                 session.saveOrUpdate(stopTime);

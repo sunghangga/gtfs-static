@@ -45,6 +45,12 @@ public class ImportTransactionService implements GlobalVariable {
     @Autowired
     private TransferService transferService;
     @Autowired
+    private DirectionNamesExceptionsService directionNamesExceptionsService;
+    @Autowired
+    private DirectionsService directionsService;
+    @Autowired
+    private StopOrderExceptionsService stopOrderExceptionsService;
+    @Autowired
     private DataownerService dataOwnerService;
     @Autowired
     private PlaceService placeService;
@@ -131,6 +137,21 @@ public class ImportTransactionService implements GlobalVariable {
             if (fileInfo.containsKey(STOP_TIMES)) {
                 dataCount += stopTimeService.parseSaveData(fileInfo.get(STOP_TIMES));
                 importComponent.getEntityList().add(StopTime.TABLE_NAME);
+            }
+            // Check if filepath contain direction_names_exceptions
+            if (fileInfo.containsKey(DIRECTION_NAMES_EXCEPTIONS)) {
+                dataCount += directionNamesExceptionsService.parseSaveData(fileInfo.get(DIRECTION_NAMES_EXCEPTIONS));
+                importComponent.getEntityList().add(DirectionNamesExceptions.TABLE_NAME);
+            }
+            // Check if filepath contain direction_names_exceptions
+            if (fileInfo.containsKey(DIRECTIONS)) {
+                dataCount += directionsService.parseSaveData(fileInfo.get(DIRECTIONS));
+                importComponent.getEntityList().add(Directions.TABLE_NAME);
+            }
+            // Check if filepath contain direction_names_exceptions
+            if (fileInfo.containsKey(STOP_ORDER_EXCEPTIONS)) {
+                dataCount += stopOrderExceptionsService.parseSaveData(fileInfo.get(STOP_ORDER_EXCEPTIONS));
+                importComponent.getEntityList().add(StopOrderExceptions.TABLE_NAME);
             }
 
             // Set save data count

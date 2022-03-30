@@ -6,6 +6,7 @@ import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class MonitoredCall implements Serializable {
@@ -42,6 +43,8 @@ public class MonitoredCall implements Serializable {
     private ZonedDateTime expectedDepartureTime;
     @XmlElement(name = "DepartureDelay")
     private int departureDelay;
+    @XmlElement(name = "ConnectionRoute")
+    private List<ConnectionRoutes> connectionRoute;
 
     public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, int wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
         this.stopPointRef = stopPointRef;
@@ -56,5 +59,21 @@ public class MonitoredCall implements Serializable {
         this.aimedDepartureTime = aimedDepartureTime;
         this.expectedDepartureTime = expectedDepartureTime;
         this.departureDelay = departureDelay;
+    }
+
+    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, int wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
+        this.stopPointRef = stopPointRef;
+        this.stopPointNames = stopPointNames;
+        this.stopSequence = stopSequence;
+        this.vehicleStopStatus = vehicleStopStatus;
+        this.vehicleLocationAtStop = vehicleLocationAtStop;
+        this.wheelchairBoarding = wheelchairBoarding;
+        this.aimedArrivalTime = aimedArrivalTime;
+        this.expectedArrivalTime = expectedArrivalTime;
+        this.arrivalDelay = arrivalDelay;
+        this.aimedDepartureTime = aimedDepartureTime;
+        this.expectedDepartureTime = expectedDepartureTime;
+        this.departureDelay = departureDelay;
+        this.connectionRoute = connectionRoute;
     }
 }

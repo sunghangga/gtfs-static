@@ -1,31 +1,29 @@
 package com.maestronic.gtfs.service;
 
-import com.maestronic.gtfs.entity.Agency;
-import com.maestronic.gtfs.repository.AgencyRepository;
+import com.maestronic.gtfs.entity.DirectionNamesExceptions;
+import com.maestronic.gtfs.entity.Directions;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.Logger;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.hibernate.Session;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 @Service
-public class AgencyService {
+public class DirectionsService {
 
     @PersistenceContext
     private EntityManager entityManager;
     private Session session;
     @Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
     private int batchSize;
-    @Autowired
-    private AgencyRepository agencyRepository;
 
     private Session getSession() {
         if (session == null) session = entityManager.unwrap(Session.class);
@@ -47,23 +45,16 @@ public class AgencyService {
              CSVParser csvParser = new CSVParser(fileReader,
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
-            // Delete all data in table
-//            agencyRepository.deleteAllData();
-
             // Insert new data
             for (CSVRecord csvRecord : csvParser) {
-                Agency agency = new Agency(
-                        csvRecord.get("agency_id"),
-                        csvRecord.get("agency_name"),
-                        csvRecord.get("agency_url"),
-                        csvRecord.get("agency_timezone"),
-                        csvParser.getHeaderMap().containsKey("agency_lang") ? csvRecord.get("agency_lang") : "",
-                        csvParser.getHeaderMap().containsKey("agency_phone") ? csvRecord.get("agency_phone") : "",
-                        csvParser.getHeaderMap().containsKey("agency_fare_url") ? csvRecord.get("agency_fare_url") : "",
-                        csvParser.getHeaderMap().containsKey("agency_email") ? csvRecord.get("agency_email") : ""
+                Directions directions = new Directions(
+                        csvRecord.get("route_id"),
+                        Integer.parseInt(csvRecord.get("direction_id")),
+                        csvParser.getHeaderMap().containsKey("direction") ? csvRecord.get("direction") : "",
+                        csvRecord.get("route_short_name")
                 );
 
-                session.saveOrUpdate(agency);
+                session.saveOrUpdate(directions);
                 // compare batch saved count
                 dataCount++;
                 checkBatchSize(dataCount);
@@ -71,10 +62,11 @@ public class AgencyService {
 
             session.flush();
             session.clear();
-            Logger.info("Parse and save " + GlobalVariable.AGENCY + " file is complete.");
+            Logger.info("Parse and save " + GlobalVariable.DIRECTIONS + " file is complete.");
             return dataCount;
         } catch (Exception e) {
-            String logMessage = "Fail to parse and save " + GlobalVariable.AGENCY + " file. " + e.getMessage();
+            e.printStackTrace();
+            String logMessage = "Fail to parse and save " + GlobalVariable.DIRECTIONS + " file. " + e.getMessage();
             throw new RuntimeException(logMessage);
         }
     }

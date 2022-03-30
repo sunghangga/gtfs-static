@@ -64,8 +64,8 @@ public class StopService {
                         csvParser.getHeaderMap().containsKey("stop_url") ? csvRecord.get("stop_url") : "",
                         csvRecord.get("location_type").isEmpty() ? null : Integer.parseInt(csvRecord.get("location_type")),
                         csvRecord.get("parent_station"),
-                        csvRecord.get("stop_timezone"),
-                        csvRecord.get("wheelchair_boarding").isEmpty() ? null : Integer.parseInt(csvRecord.get("wheelchair_boarding")),
+                        csvParser.getHeaderMap().containsKey("stop_timezone") ? csvRecord.get("stop_timezone") : "",
+                        csvParser.getHeaderMap().containsKey("wheelchair_boarding") ? (csvRecord.get("wheelchair_boarding").isEmpty() ? null : Integer.parseInt(csvRecord.get("wheelchair_boarding"))) : null,
                         csvParser.getHeaderMap().containsKey("level_id") ? csvRecord.get("level_id") : "",
                         csvParser.getHeaderMap().containsKey("platform_code") ? csvRecord.get("platform_code") : ""
                 );

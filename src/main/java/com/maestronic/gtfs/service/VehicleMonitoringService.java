@@ -58,7 +58,7 @@ public class VehicleMonitoringService implements GlobalVariable {
         OnwardCalls onwardCalls = new OnwardCalls();
         VehicleMonitoringDelivery vehicleMonitoringDelivery = new VehicleMonitoringDelivery();
         String vehicleLabel = mapFirstRow(resultList.get(0));
-        VehicleMonitoring row = new VehicleMonitoring();
+        VehicleMonitoring row;
 
         for (int i = 1; i < resultList.size(); i++) {
             row = resultList.get(i);

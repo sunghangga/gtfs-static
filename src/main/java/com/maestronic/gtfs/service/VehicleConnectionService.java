@@ -2,12 +2,15 @@ package com.maestronic.gtfs.service;
 
 import com.maestronic.gtfs.entity.VehicleMonitoring;
 import com.maestronic.gtfs.mapclass.*;
+import com.maestronic.gtfs.repository.ConnectionTimetableRepository;
 import com.maestronic.gtfs.repository.VehicleMonitoringRepository;
 import com.maestronic.gtfs.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.Tuple;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,13 +20,34 @@ public class VehicleConnectionService implements GlobalVariable {
     private TimeService timeService;
     @Autowired
     private VehicleMonitoringRepository vehicleMonitoringRepository;
+    @Autowired
+    private ConnectionTimetableRepository connectionTimetableRepository;
     private MonitoredCall monitoredCall;
     private Location location;
     @Value("${timezone}")
     private String timezone;
 
+    private List<ConnectionRoutes> getConnectionRoutes(String routeId, String stopId) {
+        List<Tuple> resultConnectionList = connectionTimetableRepository.findConnectionRoutesByParam(routeId, stopId);
+        List<ConnectionRoutes> connectionList = new ArrayList<>();
+
+        for (Tuple connection : resultConnectionList) {
+            connectionList.add(
+                    new ConnectionRoutes(
+                            connection.get(0).toString(),
+                            connection.get(1).toString(),
+                            connection.get(2).toString(),
+                            connection.get(3).toString()
+                    )
+            );
+        }
+        return connectionList;
+    }
+
     private String mapFirstRow(VehicleMonitoring row) {
         location = new Location(row.getPositionLongitude(), row.getPositionLatitude());
+        // Find connection routes
+
         monitoredCall = new MonitoredCall(
                 row.getStopId(),
                 row.getStopName(),
@@ -36,7 +60,8 @@ public class VehicleConnectionService implements GlobalVariable {
                 row.getArrivalDelay(),
                 timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
                 timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
-                row.getDepartureDelay()
+                row.getDepartureDelay(),
+                getConnectionRoutes(row.getRouteId(), row.getStopId())
         );
 
         return row.getVehicleLabel();
@@ -47,7 +72,7 @@ public class VehicleConnectionService implements GlobalVariable {
         OnwardCalls onwardCalls = new OnwardCalls();
         VehicleMonitoringDelivery vehicleMonitoringDelivery = new VehicleMonitoringDelivery();
         String vehicleLabel = mapFirstRow(resultList.get(0));
-        VehicleMonitoring row = new VehicleMonitoring();
+        VehicleMonitoring row;
 
         for (int i = 1; i < resultList.size(); i++) {
             row = resultList.get(i);
@@ -88,7 +113,8 @@ public class VehicleConnectionService implements GlobalVariable {
                         row.getArrivalDelay(),
                         timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
                         timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
-                        row.getDepartureDelay()
+                        row.getDepartureDelay(),
+                        getConnectionRoutes(row.getRouteId(), row.getStopId())
                 );
 
                 // Re-initial object
@@ -107,7 +133,8 @@ public class VehicleConnectionService implements GlobalVariable {
                     row.getArrivalDelay(),
                     timeService.durToZoneDateTime(row.getAimedDepartureTime(), row.getTripStartDate()),
                     timeService.unixToZoneDateTime(row.getExpectedDepartureTime()),
-                    row.getDepartureDelay()
+                    row.getDepartureDelay(),
+                    getConnectionRoutes(row.getRouteId(), row.getStopId())
             );
             onwardCalls.getOnwardCalls().add(onwardCall);
         }
@@ -149,7 +176,7 @@ public class VehicleConnectionService implements GlobalVariable {
         return gtfs;
     }
 
-    public String getRealVehicleMonitoringJson(String agency_id, String vehicle_id) throws Exception {
+    public String getVehicleMonitorConnection(String agency_id, String vehicle_id) throws Exception {
         List<VehicleMonitoring> resultList;
         if (vehicle_id == null) {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id);

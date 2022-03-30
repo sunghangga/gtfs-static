@@ -25,19 +25,19 @@ public class VehicleConnectionController {
 
     @GetMapping(path = "api/gtfs/vehicle-monitoring-connection", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> getVehicleMonitoringConnection(@RequestParam(required = true) String agency_id,
-                                                                 @RequestParam(required = false) String vehicle_id) {
+                                                                 @RequestParam(required = true) String vehicle_id) {
 
         headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // Check if required parameter is empty or null
-        if (agency_id.isEmpty() || agency_id == null) {
+        // Check if required parameter is empty string or null
+        if (agency_id.isEmpty() || agency_id == null || vehicle_id.isEmpty() || vehicle_id == null) {
             throw new IllegalArgumentException();
         }
 
         try {
-            String response = vehicleConnectionService.getRealVehicleMonitoringJson(agency_id, vehicle_id);
+            String response = vehicleConnectionService.getVehicleMonitorConnection(agency_id, vehicle_id);
 
             if (response == null) {
                 return new ResponseEntity<>(
@@ -61,6 +61,7 @@ public class VehicleConnectionController {
                     HttpStatus.OK
             );
         } catch (Exception e) {
+            e.printStackTrace();
             return new ResponseEntity<>(
                     ResponseMessage.exceptionErrorJson(
                             HttpStatus.BAD_REQUEST.value(),
