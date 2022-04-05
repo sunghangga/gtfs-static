@@ -6,6 +6,20 @@ All notable changes to this application will be documented in this file.
 
 - This application used for import GTFS data to the database and provide API.
 
+## [2.0.1] - 2022-03-30
+
+### **GTFS**
+
+#### Added
+
+- Import option for VIA and Translink GTFS data
+
+### **API**
+
+#### Updated
+
+- Fixing all API response for VIA and Translink GTFS data
+
 ## [2.0.0] - 2022-03-21
 
 ### **GTFS**

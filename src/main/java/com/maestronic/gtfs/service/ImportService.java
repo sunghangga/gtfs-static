@@ -316,8 +316,10 @@ public class ImportService implements GlobalVariable {
         String logMessage = IMPORT_DETAIL_VALIDATE;
         Logger.info(logMessage);
 
+        boolean isFeedInfoFound = false;
         for (String path: listPath) {
             if (path.substring(path.lastIndexOf(java.io.File.separator) + 1).equals(FEED_INFO)) {
+                isFeedInfoFound = true;
                 try (BufferedReader fileReader = new BufferedReader(new FileReader(path));
                      CSVParser csvParser = new CSVParser(fileReader,
                              CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
@@ -411,17 +413,24 @@ public class ImportService implements GlobalVariable {
                 }
             }
         }
-        // Update import status
-        importInit.setUpdatedAt(LocalDateTime.now());
-        importRepository.save(importInit);
-        // Save import detail
-        importDetailRepository.save(new ImportDetail(
-                IMPORT_STATE_VALIDATE,
-                logMessage,
-                importInit,
-                LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+
+        // Check if no feed info data
+        if (!isFeedInfoFound) {
+            logMessage = "Check validation GTFS data is complete. GTFS data is valid, ready to import!";
+            Logger.info(logMessage);
+            // Update import status
+            importInit.setUpdatedAt(LocalDateTime.now());
+            importRepository.save(importInit);
+            // Save import detail
+            importDetailRepository.save(new ImportDetail(
+                    IMPORT_STATE_VALIDATE,
+                    logMessage,
+                    importInit,
+                    LocalDateTime.now(),
+                    LocalDateTime.now())
+            );
+            return true;
+        }
 
         return false;
     }

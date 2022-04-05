@@ -34,10 +34,10 @@ public class VehicleConnectionService implements GlobalVariable {
         for (Tuple connection : resultConnectionList) {
             connectionList.add(
                     new ConnectionRoutes(
-                            connection.get(0).toString(),
-                            connection.get(1).toString(),
-                            connection.get(2).toString(),
-                            connection.get(3).toString()
+                            connection.get("route_id").toString(),
+                            connection.get("route_short_name").toString(),
+                            connection.get("route_long_name").toString(),
+                            connection.get("route_type").toString()
                     )
             );
         }

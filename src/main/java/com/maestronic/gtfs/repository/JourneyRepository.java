@@ -92,16 +92,4 @@ public class JourneyRepository {
 
         return result;
     }
-
-    public static List<Map<String, Object>> convertTuplesToMap(List<Tuple> tuples) {
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Tuple single : tuples) {
-            Map<String, Object> tempMap = new HashMap<>();
-            for (TupleElement<?> key : single.getElements()) {
-                tempMap.put(key.getAlias(), single.get(key));
-            }
-            result.add(tempMap);
-        }
-        return result;
-    }
 }

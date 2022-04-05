@@ -18,18 +18,16 @@ public interface ConnectionTimetableRepository extends JpaRepository<ConnectionT
     @Query(value = "SELECT * FROM connection_timetable(:stop_id)", nativeQuery = true)
     List<ConnectionTimetable> findConnectionTimetableByParam(@Param("stop_id") String stop_id);
 
-    @Query(value = "SELECT to_r.routeId, to_r.routeShortName, to_r.routeLongName, to_r.routeType " +
-            "FROM Transfer tf " +
-            "INNER JOIN StopTime from_st on tf.fromStopId = from_st.stopId " +
-            "INNER JOIN StopTime to_st on tf.fromStopId = to_st.stopId " +
-            "INNER JOIN Trip from_t on from_st.tripId = from_t.tripId " +
-            "INNER JOIN Trip to_t on to_st.tripId = to_t.tripId " +
-            "INNER JOIN Route from_r on from_t.routeId = from_r.routeId " +
-            "INNER JOIN Route to_r on to_t.routeId = to_r.routeId " +
-            "WHERE from_r.routeId != to_r.routeId " +
-            "AND from_r.routeId = :route_id " +
-            "AND tf.fromStopId = :stop_id " +
-            "GROUP BY to_r.routeId, to_r.routeShortName, to_r.routeType, to_r.routeLongName")
+    @Modifying
+    @Query(value = "SELECT to_r.route_id, to_r.route_short_name, to_r.route_long_name, to_r.route_type " +
+            "FROM transfers tf " +
+            "INNER JOIN stop_times to_st on tf.from_stop_id = to_st.stop_id " +
+            "INNER JOIN trips to_t on to_st.trip_id = to_t.trip_id " +
+            "INNER JOIN routes to_r on to_t.route_id = to_r.route_id " +
+            "WHERE to_r.route_id != :route_id " +
+            "AND tf.from_stop_id = :stop_id " +
+            "AND tf.transfer_type IS DISTINCT FROM 3 " +
+            "GROUP BY to_r.route_id, to_r.route_short_name, to_r.route_type, to_r.route_long_name", nativeQuery = true)
     List<Tuple> findConnectionRoutesByParam(@Param("route_id") String routeId,
                                             @Param("stop_id") String stopId);
 }

@@ -10,7 +10,7 @@ Install Depedency using Maven. (Make sure [Maven](https://maven.apache.org/insta
 mvn clean install
 ```
 ###
-Make a postgreSQL database on your machine and import [gtfs_v2.0.0.sql](https://maestronicoperationsltd-my.sharepoint.com/:f:/g/personal/angga_putra_maes-electronic_co_id/Eng41HxYYAVFrI5Giz13bCwB24bDxE5CnJNqlDOZUazTDQ?e=RhL27U) file to your database.
+Make a postgreSQL database on your machine and import [gtfs_latest.sql](https://maestronicoperationsltd-my.sharepoint.com/:f:/g/personal/angga_putra_maes-electronic_co_id/Eng41HxYYAVFrI5Giz13bCwB24bDxE5CnJNqlDOZUazTDQ?e=RhL27U) file to your database.
 ###
 Setting your application.properties and running app with IDE Eclipse or Intellij
 
