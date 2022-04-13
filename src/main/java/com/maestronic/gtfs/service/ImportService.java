@@ -293,21 +293,13 @@ public class ImportService implements GlobalVariable {
 
         String[] files = folder.list();
         if (files == null) {
-            logMessage = "No file found in directory '" + destDir + "'";
-            Logger.warn(logMessage);
+            Logger.warn("No file found in directory '" + destDir + "'");
         } else {
-            logMessage = files.length + " file will be deleted";
-            Logger.info(logMessage);
             for (String file : files) {
                 java.io.File currentFile = new java.io.File(folder.getPath(), file);
-                if (currentFile.delete()) {
-                    logMessage = "File '" + currentFile.getPath() + "' is deleted";
-                    Logger.info(logMessage);
-                } else {
-                    logMessage = "Failed deleting file '" + currentFile.getPath() + "'!";
-                    Logger.warn(logMessage);
-                }
+                currentFile.delete();
             }
+            Logger.info("File has been deleted");
         }
     }
 

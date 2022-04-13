@@ -55,6 +55,7 @@ public class VehicleConnectionService implements GlobalVariable {
                 row.getCurrentStatus(),
                 row.getCurrentStatus() != null ? (row.getCurrentStatus().equals(STOPPED_AT) ? location : new Location()) : new Location(),
                 row.getWheelchairBoarding(),
+                row.getStopScheduleRelationship(),
                 timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
                 timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                 row.getArrivalDelay(),
@@ -84,6 +85,7 @@ public class VehicleConnectionService implements GlobalVariable {
                         GlobalHelper.directionName(resultList.get(i-1).getDirectionId()),
                         resultList.get(i-1).getTripId(),
                         resultList.get(i-1).getTripHeadSign(),
+                        resultList.get(i-1).getTripScheduleRelationship(),
                         resultList.get(i-1).getAgencyId(),
                         resultList.get(i-1).getFirstStopId(),
                         resultList.get(i-1).getFirstStopName(),
@@ -108,6 +110,7 @@ public class VehicleConnectionService implements GlobalVariable {
                         row.getCurrentStatus(),
                         row.getCurrentStatus() != null ? (row.getCurrentStatus().equals(STOPPED_AT) ? location : new Location()) : new Location(),
                         row.getWheelchairBoarding(),
+                        row.getStopScheduleRelationship(),
                         timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
                         timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                         row.getArrivalDelay(),
@@ -128,6 +131,7 @@ public class VehicleConnectionService implements GlobalVariable {
                     row.getStopName(),
                     row.getStopSequence(),
                     row.getWheelchairBoarding(),
+                    row.getStopScheduleRelationship(),
                     timeService.durToZoneDateTime(row.getAimedArrivalTime(), row.getTripStartDate()),
                     timeService.unixToZoneDateTime(row.getExpectedArrivalTime()),
                     row.getArrivalDelay(),
@@ -146,6 +150,7 @@ public class VehicleConnectionService implements GlobalVariable {
                 GlobalHelper.directionName(resultList.get(0).getDirectionId()),
                 resultList.get(0).getTripId(),
                 resultList.get(0).getTripHeadSign(),
+                resultList.get(0).getTripScheduleRelationship(),
                 resultList.get(0).getAgencyId(),
                 resultList.get(0).getFirstStopId(),
                 resultList.get(0).getFirstStopName(),
@@ -179,11 +184,12 @@ public class VehicleConnectionService implements GlobalVariable {
     public String getVehicleMonitorConnection(String agency_id, String vehicle_id) throws Exception {
         List<VehicleMonitoring> resultList;
         if (vehicle_id == null) {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id);
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timeService.currentTimeToUnix());
         } else {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
                     agency_id,
-                    vehicle_id);
+                    vehicle_id,
+                    timeService.currentTimeToUnix());
         }
 
         if (resultList == null || resultList.size() <= 0) {

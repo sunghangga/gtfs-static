@@ -23,6 +23,8 @@ public class MonitoredCall implements Serializable {
     private Location vehicleLocationAtStop;
     @XmlElement(name = "WheelchairBoarding")
     private Integer wheelchairBoarding;
+    @XmlElement(name = "StopScheduleRelationship", nillable = true)
+    private String stopScheduleRelationship;
     @XmlElement(name = "AimedArrivalTime", type = String.class)
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
@@ -46,13 +48,14 @@ public class MonitoredCall implements Serializable {
     @XmlElement(name = "ConnectionRoute")
     private List<ConnectionRoutes> connectionRoute;
 
-    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, Integer wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
+    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, Integer wheelchairBoarding, String stopScheduleRelationship, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
         this.vehicleStopStatus = vehicleStopStatus;
         this.vehicleLocationAtStop = vehicleLocationAtStop;
         this.wheelchairBoarding = wheelchairBoarding;
+        this.stopScheduleRelationship = stopScheduleRelationship;
         this.aimedArrivalTime = aimedArrivalTime;
         this.expectedArrivalTime = expectedArrivalTime;
         this.arrivalDelay = arrivalDelay;
@@ -61,13 +64,14 @@ public class MonitoredCall implements Serializable {
         this.departureDelay = departureDelay;
     }
 
-    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, Integer wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
+    public MonitoredCall(String stopPointRef, String stopPointNames, int stopSequence, String vehicleStopStatus, Location vehicleLocationAtStop, Integer wheelchairBoarding, String stopScheduleRelationship, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
         this.vehicleStopStatus = vehicleStopStatus;
         this.vehicleLocationAtStop = vehicleLocationAtStop;
         this.wheelchairBoarding = wheelchairBoarding;
+        this.stopScheduleRelationship = stopScheduleRelationship;
         this.aimedArrivalTime = aimedArrivalTime;
         this.expectedArrivalTime = expectedArrivalTime;
         this.arrivalDelay = arrivalDelay;

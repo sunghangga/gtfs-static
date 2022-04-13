@@ -27,7 +27,8 @@ public class VehicleRepository {
     public List<Map<String, Object>> getVehiclePositions(String agencyId, String vehicleId, String tripId) {
         EntityManager em = emf.createEntityManager();
 
-        String queryString = "SELECT vp.vehicle_label, vp.position_latitude, position_longitude, r.agency_id, tu.trip_id, vp.timestamp " +
+        String queryString = "SELECT vp.vehicle_label, vp.position_latitude, vp.position_longitude, r.agency_id, " +
+                "vp.route_id, vp.trip_id, vp.stop_id, vp.timestamp " +
                 "FROM vehicle_positions vp " +
                 "LEFT JOIN trip_updates tu ON vp.trip_id = tu.trip_id " +
                 "LEFT JOIN routes r on r.route_id  = tu.route_id " +
@@ -56,7 +57,9 @@ public class VehicleRepository {
                             put("longitude", tuple.get("position_longitude"));
                         }});
                         put("agencyId", tuple.get("agency_id"));
+                        put("routeId", tuple.get("route_id"));
                         put("tripId", tuple.get("trip_id"));
+                        put("stopId", tuple.get("stop_id"));
                         put("timestamp", tuple.get("timestamp"));
                     }});
                 }

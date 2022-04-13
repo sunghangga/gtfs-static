@@ -19,6 +19,8 @@ public class OnwardCall implements Serializable {
     private int stopSequence;
     @XmlElement(name = "WheelchairBoarding")
     private Integer wheelchairBoarding;
+    @XmlElement(name = "StopScheduleRelationship", nillable = true)
+    private String stopScheduleRelationship;
     @XmlElement(name = "AimedArrivalTime", type = String.class)
     @XmlJavaTypeAdapter(Adapter1.class)
     @XmlSchemaType(name = "dateTime")
@@ -42,11 +44,12 @@ public class OnwardCall implements Serializable {
     @XmlElement(name = "ConnectionRoute")
     private List<ConnectionRoutes> connectionRoute;
 
-    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, Integer wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
+    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, Integer wheelchairBoarding, String stopScheduleRelationship, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
         this.wheelchairBoarding = wheelchairBoarding;
+        this.stopScheduleRelationship = stopScheduleRelationship;
         this.aimedArrivalTime = aimedArrivalTime;
         this.expectedArrivalTime = expectedArrivalTime;
         this.arrivalDelay = arrivalDelay;
@@ -55,11 +58,12 @@ public class OnwardCall implements Serializable {
         this.departureDelay = departureDelay;
     }
 
-    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, Integer wheelchairBoarding, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
+    public OnwardCall(String stopPointRef, String stopPointNames, int stopSequence, Integer wheelchairBoarding, String stopScheduleRelationship, ZonedDateTime aimedArrivalTime, ZonedDateTime expectedArrivalTime, int arrivalDelay, ZonedDateTime aimedDepartureTime, ZonedDateTime expectedDepartureTime, int departureDelay, List<ConnectionRoutes> connectionRoute) {
         this.stopPointRef = stopPointRef;
         this.stopPointNames = stopPointNames;
         this.stopSequence = stopSequence;
         this.wheelchairBoarding = wheelchairBoarding;
+        this.stopScheduleRelationship = stopScheduleRelationship;
         this.aimedArrivalTime = aimedArrivalTime;
         this.expectedArrivalTime = expectedArrivalTime;
         this.arrivalDelay = arrivalDelay;

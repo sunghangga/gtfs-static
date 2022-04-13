@@ -1,6 +1,7 @@
 package com.maestronic.gtfs.entity;
 
 import com.maestronic.gtfs.compositeid.VehicleMonitoringCompositeId;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.time.Duration;
 @Table(name = "vehicle_monitoring")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class VehicleMonitoring {
 
     @Id
@@ -73,33 +75,8 @@ public class VehicleMonitoring {
     private String currentStatus;
     @Column(name = "timestamp")
     private long timestamp;
-
-    public VehicleMonitoring(String agencyId, String vehicleLabel, String routeId, String tripId, int stopSequence, String tripStartDate, String tripHeadSign, String routeLongName, String stopId, double positionLatitude, double positionLongitude, String stopName, String firstStopId, String firstStopName, String lastStopId, String lastStopName, Integer wheelchairBoarding, Duration aimedDepartureTime, int departureDelay, long expectedDepartureTime, Duration aimedArrivalTime, int arrivalDelay, long expectedArrivalTime, int directionId, String currentStatus, long timestamp) {
-        this.agencyId = agencyId;
-        this.vehicleLabel = vehicleLabel;
-        this.routeId = routeId;
-        this.tripId = tripId;
-        this.stopSequence = stopSequence;
-        this.tripStartDate = tripStartDate;
-        this.tripHeadSign = tripHeadSign;
-        this.routeLongName = routeLongName;
-        this.stopId = stopId;
-        this.positionLatitude = positionLatitude;
-        this.positionLongitude = positionLongitude;
-        this.stopName = stopName;
-        this.firstStopId = firstStopId;
-        this.firstStopName = firstStopName;
-        this.lastStopId = lastStopId;
-        this.lastStopName = lastStopName;
-        this.wheelchairBoarding = wheelchairBoarding;
-        this.aimedDepartureTime = aimedDepartureTime;
-        this.departureDelay = departureDelay;
-        this.expectedDepartureTime = expectedDepartureTime;
-        this.aimedArrivalTime = aimedArrivalTime;
-        this.arrivalDelay = arrivalDelay;
-        this.expectedArrivalTime = expectedArrivalTime;
-        this.directionId = directionId;
-        this.currentStatus = currentStatus;
-        this.timestamp = timestamp;
-    }
+    @Column(name = "trip_schedule_relationship")
+    private String tripScheduleRelationship;
+    @Column(name = "stop_schedule_relationship")
+    private String stopScheduleRelationship;
 }

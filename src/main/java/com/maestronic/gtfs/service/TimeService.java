@@ -116,4 +116,8 @@ public class TimeService {
                 ZoneId.of(timezone)).format(dateTimeFormat)),
                 LocalTime.parse(strTime)).atZone(ZoneId.of(timezone)).toEpochSecond();
     }
+
+    public long currentTimeToUnix() {
+        return LocalDateTime.now(ZoneId.of(timezone)).atZone(ZoneId.of(timezone)).toEpochSecond();
+    }
 }

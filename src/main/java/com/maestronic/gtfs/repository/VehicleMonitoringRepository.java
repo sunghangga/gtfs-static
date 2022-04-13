@@ -14,11 +14,13 @@ import java.util.List;
 public interface VehicleMonitoringRepository extends JpaRepository<VehicleMonitoring, VehicleMonitoringCompositeId> {
 
     @Modifying
-    @Query(value = "SELECT * FROM vehicle_monitoring(:agency_id)", nativeQuery = true)
-    List<VehicleMonitoring> findVehicleMonitoringByAgency(@Param("agency_id") String agency_id);
+    @Query(value = "SELECT * FROM vehicle_monitoring(:agency_id,:timestamp)", nativeQuery = true)
+    List<VehicleMonitoring> findVehicleMonitoringByAgency(@Param("agency_id") String agency_id,
+                                                          @Param("timestamp") long timestamp);
 
     @Modifying
-    @Query(value = "SELECT * FROM vehicle_monitoring(:agency_id, :vehicle_label)", nativeQuery = true)
+    @Query(value = "SELECT * FROM vehicle_monitoring(:agency_id, :vehicle_label, :timestamp)", nativeQuery = true)
     List<VehicleMonitoring> findVehicleMonitoringByParam(@Param("agency_id") String agency_id,
-                                                         @Param("vehicle_label") String vehicle_label);
+                                                         @Param("vehicle_label") String vehicle_label,
+                                                         @Param("timestamp") long timestamp);
 }

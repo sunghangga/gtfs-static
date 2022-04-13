@@ -18,6 +18,8 @@ public class MonitoredVehicleJourney implements Serializable {
     private String tripRef;
     @XmlElement(name = "TripHeadSign")
     private String tripName;
+    @XmlElement(name = "TripScheduleRelationship", nillable = true)
+    private String tripScheduleRelationship;
     @XmlElement(name = "OperatorRef")
     private String operatorRef;
     @XmlElement(name = "OriginRef")
@@ -37,12 +39,13 @@ public class MonitoredVehicleJourney implements Serializable {
     @XmlElement(name = "OnwardCalls")
     private OnwardCalls onwardCalls;
 
-    public MonitoredVehicleJourney(String routeRef, String routeName, String directionRef, String tripRef, String tripName, String operatorRef, String originRef, String originNames, String destinationRef, String destinationNames, Location vehicleLocation, String vehicleRef, MonitoredCall monitoredCall, OnwardCalls onwardCalls) {
+    public MonitoredVehicleJourney(String routeRef, String routeName, String directionRef, String tripRef, String tripName, String tripScheduleRelationship, String operatorRef, String originRef, String originNames, String destinationRef, String destinationNames, Location vehicleLocation, String vehicleRef, MonitoredCall monitoredCall, OnwardCalls onwardCalls) {
         this.routeRef = routeRef;
         this.routeName = routeName;
         this.directionRef = directionRef;
         this.tripRef = tripRef;
         this.tripName = tripName;
+        this.tripScheduleRelationship = tripScheduleRelationship;
         this.operatorRef = operatorRef;
         this.originRef = originRef;
         this.originNames = originNames;

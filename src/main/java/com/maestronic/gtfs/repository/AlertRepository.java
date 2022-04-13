@@ -33,22 +33,28 @@ public class AlertRepository {
         EntityManager em = emf.createEntityManager();
 
         // Get trip location
+        String paramString = "";
         String queryString = "SELECT es.agency_id, es.route_id, es.route_type, es.trip_id, es.stop_id, " +
                 "a.start, a.end, a.cause, a.effect, a.header_text, a.description_text " +
                 "FROM alerts a " +
                 "INNER JOIN entity_selectors es ON a.id = es.alert_id " +
-                "WHERE ( 1 = 1 ";
+                "WHERE a.start <= " + timeService.currentTimeToUnix() + " AND a.end >= " + timeService.currentTimeToUnix() + " ";
 
         if (routeId != null && routeId.length() > 0) {
-            queryString += "OR es.route_id = '" + routeId + "' ";
+            paramString += "OR es.route_id = '" + routeId + "' ";
         }
         if (tripId != null && tripId.length() > 0) {
-            queryString += "OR es.trip_id = '" + tripId + "' ";
+            paramString += "OR es.trip_id = '" + tripId + "' ";
         }
         if (stopId != null && stopId.length() > 0) {
-            queryString += "OR es.stop_id = '" + stopId + "' ";
+            paramString += "OR es.stop_id = '" + stopId + "' ";
         }
-        queryString += ") ";
+        // Check if parameter exists
+        if (paramString.length() > 0) {
+            queryString += "AND (1 != 1 " + paramString + ") ";
+        } else {
+            queryString += "AND (1 = 1) ";
+        }
 
         if (agencyId != null && agencyId.length() > 0) {
             queryString += "AND es.agency_id = '" + agencyId + "' ";
@@ -62,6 +68,7 @@ public class AlertRepository {
         if (effect != null && effect.length() > 0) {
             queryString += "AND a.effect = '" + effect + "' ";
         }
+        queryString += "ORDER BY (cast(NULLIF(regexp_replace(es.route_id, '\\D', '', 'g'), '') AS integer)) ASC";
 
         // Execute query builder
         Query query = em.createNativeQuery(queryString, Tuple.class);

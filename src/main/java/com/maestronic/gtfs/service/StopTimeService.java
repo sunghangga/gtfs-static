@@ -61,13 +61,13 @@ public class StopTimeService {
                         csvRecord.get("stop_id"),
                         Integer.parseInt(csvRecord.get("stop_sequence")),
                         csvRecord.get("stop_headsign"),
-                        Integer.parseInt(csvRecord.get("pickup_type")),
-                        Integer.parseInt(csvRecord.get("drop_off_type")),
+                        csvRecord.get("pickup_type").isEmpty() ? null : Integer.parseInt(csvRecord.get("pickup_type")),
+                        csvRecord.get("drop_off_type").isEmpty() ? null : Integer.parseInt(csvRecord.get("drop_off_type")),
                         csvParser.getHeaderMap().containsKey("continuous_pickup") ? Integer.parseInt(csvRecord.get("continuous_pickup")) : null,
                         csvParser.getHeaderMap().containsKey("continuous_drop_off") ? Integer.parseInt(csvRecord.get("continuous_drop_off")) : null,
                         csvRecord.get("shape_dist_traveled").isEmpty() ? null : Double.parseDouble(csvRecord.get("shape_dist_traveled")),
                         csvParser.getHeaderMap().containsKey("fare_units_traveled") ? (csvRecord.get("fare_units_traveled").isEmpty() ? null : Double.parseDouble(csvRecord.get("fare_units_traveled"))) : null,
-                        csvParser.getHeaderMap().containsKey("timepoint") ? Integer.parseInt(csvRecord.get("timepoint")) : null
+                        csvParser.getHeaderMap().containsKey("timepoint") ? (csvRecord.get("timepoint").isEmpty() ? null : Integer.parseInt(csvRecord.get("timepoint"))) : null
                 );
 
                 session.saveOrUpdate(stopTime);
