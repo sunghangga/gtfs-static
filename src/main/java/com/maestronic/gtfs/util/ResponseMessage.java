@@ -2,7 +2,6 @@ package com.maestronic.gtfs.util;
 
 import com.maestronic.gtfs.mapclass.ErrorCondition;
 import com.maestronic.gtfs.mapclass.ExceptionError;
-import com.maestronic.gtfs.mapclass.Gtfs;
 
 import java.util.HashMap;
 import java.util.Map;
