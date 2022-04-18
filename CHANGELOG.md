@@ -6,6 +6,13 @@ All notable changes to this application will be documented in this file.
 
 - This application used for import GTFS data to the database and provide API.
 
+## [2.1.1] - 2022-04-18
+
+#### Updated
+
+- Add parameter "approx" for API VM
+- Add condition for filtering timestamp in function database vehicle_monitoring
+
 ## [2.1.0] - 2022-04-12
 
 #### Updated
