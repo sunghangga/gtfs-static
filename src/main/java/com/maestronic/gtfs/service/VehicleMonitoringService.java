@@ -165,15 +165,16 @@ public class VehicleMonitoringService implements GlobalVariable {
         return gtfs;
     }
 
-    public String getRealVehicleMonitoringXml(String agency_id, String vehicle_id) {
+    public String getRealVehicleMonitoringXml(String agency_id, String vehicle_id, Long approx) {
         List<VehicleMonitoring> resultList;
+        long timestamp = approx == null ? 0 : timeService.currentTimeToUnix() + approx;
         if (vehicle_id == null) {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timeService.currentTimeToUnix());
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timestamp);
         } else {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
                     agency_id,
                     vehicle_id,
-                    timeService.currentTimeToUnix());
+                    timestamp);
         }
 
         if (resultList == null || resultList.size() <= 0) {
@@ -183,15 +184,16 @@ public class VehicleMonitoringService implements GlobalVariable {
         return GtfsXml.objectToStrXml(gtfs);
     }
 
-    public String getRealVehicleMonitoringJson(String agency_id, String vehicle_id) throws Exception {
+    public String getRealVehicleMonitoringJson(String agency_id, String vehicle_id, Long approx) throws Exception {
         List<VehicleMonitoring> resultList;
+        long timestamp = approx == null ? 0 : timeService.currentTimeToUnix() + approx;
         if (vehicle_id == null) {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timeService.currentTimeToUnix());
+            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timestamp);
         } else {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
                     agency_id,
                     vehicle_id,
-                    timeService.currentTimeToUnix());
+                    timestamp);
         }
 
         if (resultList == null || resultList.size() <= 0) {

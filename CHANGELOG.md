@@ -13,6 +13,7 @@ All notable changes to this application will be documented in this file.
 - Add parameter current time for Vehicle Moniroting API
 - Change data type id sequence in database from serial to bigserial for realtime data
 - Delete unused log
+- Add Scheduled Relationship status in API VM (Vehicle Monitoring)
 
 ## [2.0.1] - 2022-03-30
 
@@ -22,7 +23,7 @@ All notable changes to this application will be documented in this file.
 
 #### Updated
 
-- Fixing all API response for VIA and Translink GTFS data
+- Update all API response for VIA and Translink GTFS data
 
 ## [2.0.0] - 2022-03-21
 

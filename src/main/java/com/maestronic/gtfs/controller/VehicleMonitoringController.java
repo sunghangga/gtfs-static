@@ -28,8 +28,9 @@ public class VehicleMonitoringController {
 
     @GetMapping(path = "api/gtfs/vehiclemonitoring", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> getRealVehicleMonitoring(@RequestParam(required = true) String agency_id,
-                                                   @RequestParam(required = false) String vehicle_id,
-                                                   @RequestParam(required = false) String format) {
+                                                           @RequestParam(required = false) String vehicle_id,
+                                                           @RequestParam(required = false) String format,
+                                                           @RequestParam(required = false) Long approx) {
 
         headers = new HttpHeaders();
 
@@ -44,7 +45,7 @@ public class VehicleMonitoringController {
             headers.setContentType(MediaType.APPLICATION_XML);
 
             try {
-                String response = vehicleMonitoringService.getRealVehicleMonitoringXml(agency_id, vehicle_id);
+                String response = vehicleMonitoringService.getRealVehicleMonitoringXml(agency_id, vehicle_id, approx);
                 if (response == null) {
                     return new ResponseEntity<>(
                             ResponseMessage.noInfoForTopicError(HttpStatus.OK.value(), "No data available."),
@@ -71,7 +72,7 @@ public class VehicleMonitoringController {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             try {
-                String response = vehicleMonitoringService.getRealVehicleMonitoringJson(agency_id, vehicle_id);
+                String response = vehicleMonitoringService.getRealVehicleMonitoringJson(agency_id, vehicle_id, approx);
 
                 if (response == null) {
                     return new ResponseEntity<>(
