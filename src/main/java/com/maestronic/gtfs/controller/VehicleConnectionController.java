@@ -26,7 +26,7 @@ public class VehicleConnectionController {
     @GetMapping(path = "api/gtfs/vehicle-monitoring-connection", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> getVehicleMonitoringConnection(@RequestParam(required = true) String agency_id,
                                                                  @RequestParam(required = true) String vehicle_id,
-                                                                 @RequestParam(required = false) Long approx) {
+                                                                 @RequestParam(required = false, defaultValue = "0") Long approx) {
 
         headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));

@@ -167,7 +167,7 @@ public class VehicleMonitoringService implements GlobalVariable {
 
     public String getRealVehicleMonitoringXml(String agency_id, String vehicle_id, Long approx) {
         List<VehicleMonitoring> resultList;
-        long timestamp = approx == null ? 0 : timeService.currentTimeToUnix() + approx;
+        long timestamp = approx == 0 ? 0 : timeService.currentTimeToUnix() + approx;
         if (vehicle_id == null) {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timestamp);
         } else {
@@ -186,7 +186,7 @@ public class VehicleMonitoringService implements GlobalVariable {
 
     public String getRealVehicleMonitoringJson(String agency_id, String vehicle_id, Long approx) throws Exception {
         List<VehicleMonitoring> resultList;
-        long timestamp = approx == null ? 0 : timeService.currentTimeToUnix() + approx;
+        long timestamp = approx == 0 ? 0 : timeService.currentTimeToUnix() + approx;
         if (vehicle_id == null) {
             resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timestamp);
         } else {

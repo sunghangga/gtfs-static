@@ -30,7 +30,7 @@ public class VehicleMonitoringController {
     public ResponseEntity<Object> getRealVehicleMonitoring(@RequestParam(required = true) String agency_id,
                                                            @RequestParam(required = false) String vehicle_id,
                                                            @RequestParam(required = false) String format,
-                                                           @RequestParam(required = false) Long approx) {
+                                                           @RequestParam(required = false, defaultValue = "0") Long approx) {
 
         headers = new HttpHeaders();
 
