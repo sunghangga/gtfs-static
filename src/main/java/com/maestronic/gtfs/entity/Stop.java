@@ -1,10 +1,13 @@
 package com.maestronic.gtfs.entity;
 
+import lombok.Data;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+@Data
 @Entity
 @Table(name = Stop.TABLE_NAME)
 public class Stop {

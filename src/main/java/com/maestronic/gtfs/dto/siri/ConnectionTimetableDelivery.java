@@ -1,4 +1,4 @@
-package com.maestronic.gtfs.mapclass;
+package com.maestronic.gtfs.dto.siri;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

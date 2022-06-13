@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import com.maestronic.gtfs.mapclass.Gtfs;
+import com.maestronic.gtfs.dto.siri.Gtfs;
 
 import java.io.IOException;
 import java.io.OutputStream;

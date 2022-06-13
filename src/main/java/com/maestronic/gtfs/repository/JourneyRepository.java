@@ -1,5 +1,6 @@
 package com.maestronic.gtfs.repository;
 
+import com.maestronic.gtfs.entity.NearestStop;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -91,5 +92,40 @@ public class JourneyRepository {
         em.close();
 
         return result;
+    }
+
+    public List<NearestStop> getNearestStopFromLocation(Double originLat, Double originLong, String day, int date, String time) {
+        EntityManager em = emf.createEntityManager();
+
+        // Get trip location
+        String queryString = "SELECT t.trip_id, s.*, st.stop_sequence, t.direction_id, st.arrival_time, st.departure_time " +
+                "FROM trips t " +
+                "INNER JOIN (SELECT service_id FROM calendar " +
+                "          WHERE start_date <= " + date + " " +
+                "            AND end_date >= " + date + " " +
+                "            AND " + day + " = 1 " +
+                "          UNION " +
+                "            SELECT service_id FROM calendar_dates " +
+                "              WHERE date = " + date + " " +
+                "                AND exception_type = 1 " +
+                "          EXCEPT " +
+                "            SELECT service_id FROM calendar_dates " +
+                "              WHERE date = " + date + " " +
+                "                AND exception_type = 2 " +
+                "       ) c ON c.service_id = t.service_id " +
+                "LEFT JOIN stop_times st ON t.trip_id = st.trip_id " +
+                "INNER JOIN (SELECT stop_id, stop_code, stop_name, " +
+                "   st_distancesphere(geometry(point(stop_lon, stop_lat)), geometry(point(" + originLong + ", " + originLat + "))) distance " +
+                "   FROM stops) s ON st.stop_id = s.stop_id " +
+                "WHERE s.distance < 500 " +
+                "AND st.departure_time > '" + time + "'";
+
+        // Execute query builder
+        Query query = em.createNativeQuery(queryString, NearestStop.class);
+        List<NearestStop> dataListShape = query.getResultList();
+
+        em.close();
+
+        return dataListShape;
     }
 }

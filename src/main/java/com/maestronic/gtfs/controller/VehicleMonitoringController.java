@@ -1,6 +1,7 @@
 package com.maestronic.gtfs.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.maestronic.gtfs.entity.Vehicle;
 import com.maestronic.gtfs.service.VehicleService;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.ResponseMessage;
@@ -211,7 +212,8 @@ public class VehicleMonitoringController {
     @GetMapping(path = "api/gtfs/vehicle-positions", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> getVehiclePositions(@RequestParam(required = false) String agency_id,
                                                       @RequestParam(required = false) String vehicle_id,
-                                                      @RequestParam(required = false) String trip_id) {
+                                                      @RequestParam(required = false) String trip_id,
+                                                      @RequestParam(required = false, defaultValue = "0") long approx) {
 
         // Set headers
         headers = new HttpHeaders();
@@ -219,7 +221,51 @@ public class VehicleMonitoringController {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         try {
-            List<Map<String, Object>> response = vehicleService.getVehiclePositions(agency_id, vehicle_id, trip_id);
+            List<Map<String, Object>> response = vehicleService.getVehiclePositions(agency_id, vehicle_id, trip_id, approx);
+
+            if (response == null) {
+                return new ResponseEntity<>(
+                        ResponseMessage.retrieveDataJson(
+                                HttpStatus.OK.value(),
+                                "No data available.",
+                                new ArrayList()
+                        ),
+                        headers,
+                        HttpStatus.OK
+                );
+            }
+
+            return new ResponseEntity<>(
+                    ResponseMessage.retrieveDataJson(
+                            HttpStatus.OK.value(),
+                            "Retrieved data successfully.",
+                            response
+                    ),
+                    headers,
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    ResponseMessage.exceptionErrorJson(
+                            HttpStatus.BAD_REQUEST.value(),
+                            "Something went wrong."
+                    ),
+                    headers,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    @GetMapping(path = "api/gtfs/vehicles", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getVehicles() {
+
+        // Set headers
+        headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        try {
+            List<Vehicle> response = vehicleService.getVehicles();
 
             if (response == null) {
                 return new ResponseEntity<>(

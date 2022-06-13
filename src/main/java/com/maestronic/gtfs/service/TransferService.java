@@ -1,7 +1,9 @@
 package com.maestronic.gtfs.service;
 
+import com.maestronic.gtfs.entity.Stop;
 import com.maestronic.gtfs.entity.Transfer;
 import com.maestronic.gtfs.repository.TransferRepository;
+import com.maestronic.gtfs.util.GlobalHelper;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.Logger;
 import org.apache.commons.csv.CSVFormat;
@@ -16,6 +18,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class TransferService {
@@ -40,7 +44,41 @@ public class TransferService {
         }
     }
 
-    public Integer parseSaveData(String path) {
+    private Integer mapLocationTransferTime(List<Stop> stops, String fromStopId, String toStopId) {
+        int count = 0;
+        Integer transferTime = -1;
+        double fromLat = 0;
+        double fromLon = 0;
+        double toLat = 0;
+        double toLon = 0;
+        for (Stop stop : stops) {
+            if (stop.getStopId().equals(fromStopId)) {
+                fromLat = stop.getStopLat();
+                fromLon = stop.getStopLon();
+                count++;
+            } else if (stop.getStopId().equals(toStopId)) {
+                toLat = stop.getStopLat();
+                toLon = stop.getStopLon();
+                count++;
+            }
+
+            // Calculate transfer time by distance
+            // Assuming 1 meter = 1 second
+            if (count > 1) {
+                transferTime = (int) GlobalHelper.computeGreatCircleDistance(fromLat, fromLon, toLat, toLon);
+                break;
+            }
+        }
+
+        // If stop not found return null
+        if (transferTime == -1) {
+            transferTime = null;
+        }
+
+        return transferTime;
+    }
+
+    public Integer parseSaveData(String path, List<Stop> stopLocations) {
 
         getSession();
         int dataCount = 0;
@@ -51,7 +89,22 @@ public class TransferService {
             // Delete all data in table
 //            transferRepository.deleteAllData();
 
+            Integer transferTime;
             for (CSVRecord csvRecord : csvParser) {
+
+                // Count transfer time between stops
+                if (csvParser.getHeaderMap().containsKey("min_transfer_time")) {
+                    if (csvRecord.get("min_transfer_time").isEmpty()) {
+                        transferTime = mapLocationTransferTime(stopLocations,
+                                csvRecord.get("from_stop_id"),
+                                csvRecord.get("to_stop_id"));
+                    } else {
+                        transferTime = Integer.parseInt(csvRecord.get("min_transfer_time"));
+                    }
+                } else {
+                    transferTime = null;
+                }
+
                 Transfer transfer = new Transfer(
                         csvRecord.get("from_stop_id"),
                         csvRecord.get("to_stop_id"),
@@ -60,7 +113,7 @@ public class TransferService {
                         csvParser.getHeaderMap().containsKey("from_trip_id") ? csvRecord.get("from_trip_id") : "",
                         csvParser.getHeaderMap().containsKey("to_trip_id") ? csvRecord.get("to_trip_id") : "",
                         csvRecord.get("transfer_type").isEmpty() ? null : Integer.parseInt(csvRecord.get("transfer_type")),
-                        csvParser.getHeaderMap().containsKey("min_transfer_time") ? (csvRecord.get("min_transfer_time").isEmpty() ? null : Integer.parseInt(csvRecord.get("min_transfer_time"))) : null
+                        transferTime
                 );
 
                 session.saveOrUpdate(transfer);

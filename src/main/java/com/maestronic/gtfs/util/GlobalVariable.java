@@ -70,4 +70,8 @@ public interface GlobalVariable {
     // XML properties
     String JAXP_SCHEMA_LANGUAGE = "http://java.sun.com/xml/jaxp/properties/schemaLanguage";
     String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
+
+    // Trip planner
+    int MAX_WALK_DISTANCE = 500;
+    String WALK_MODE = "WALK";
 }

@@ -2,6 +2,7 @@ package com.maestronic.gtfs.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.maestronic.gtfs.entity.Vehicle;
 import org.hibernate.query.NativeQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -24,14 +25,27 @@ public class VehicleRepository {
         this.emf = emf;
     }
 
-    public List<Map<String, Object>> getVehiclePositions(String agencyId, String vehicleId, String tripId) {
+    public List<Vehicle> getVehicles() {
+        EntityManager em = emf.createEntityManager();
+        // Execute query builder
+        Query query = em.createQuery("SELECT v FROM Vehicle v");
+        List<Vehicle> dataList = query.getResultList();
+        em.close();
+
+        return dataList;
+    }
+
+    public List<Map<String, Object>> getVehiclePositions(String agencyId, String vehicleId, String tripId, long timestamp) {
         EntityManager em = emf.createEntityManager();
 
         String queryString = "SELECT vp.vehicle_label, vp.position_latitude, vp.position_longitude, r.agency_id, " +
-                "vp.route_id, vp.trip_id, vp.stop_id, vp.timestamp " +
+                "r.route_id, vp_apx.trip_id, vp_apx.stop_id, vp.timestamp " +
                 "FROM vehicle_positions vp " +
-                "LEFT JOIN trip_updates tu ON vp.trip_id = tu.trip_id " +
-                "LEFT JOIN routes r on r.route_id  = tu.route_id " +
+                "LEFT JOIN (SELECT id, trip_id, stop_id " +
+                            "FROM vehicle_positions " +
+                            "WHERE timestamp >= " + timestamp + ") vp_apx ON vp.id = vp_apx.id " +
+                "LEFT JOIN trip_updates tu ON vp_apx.trip_id = tu.trip_id " +
+                "LEFT JOIN routes r ON r.route_id  = tu.route_id " +
                 "WHERE 1 = 1 ";
 
         if (agencyId != null && agencyId != "") {

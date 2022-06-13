@@ -50,9 +50,14 @@ public class TimeService {
         return Integer.parseInt(LocalDate.now(ZoneId.of(timezone)).format(dateFormat));
     }
 
-    public Integer localDateZoneBeforeGTFS() {
+    public Integer localDateZoneGTFSByDateTime(LocalDateTime dateTime) {
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return Integer.parseInt((LocalDate.now(ZoneId.of(timezone)).minusDays(1)).format(dateFormat));
+        return Integer.parseInt(dateTime.atZone(ZoneId.of(timezone)).format(dateFormat));
+    }
+
+    public String localTimeZoneGTFSByDateTime(LocalDateTime dateTime) {
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
+        return (String) dateTime.atZone(ZoneId.of(timezone)).format(dateFormat);
     }
 
     public ZonedDateTime unixToZoneDateTime(Long unixTime) {
@@ -119,5 +124,9 @@ public class TimeService {
 
     public long currentTimeToUnix() {
         return LocalDateTime.now(ZoneId.of(timezone)).atZone(ZoneId.of(timezone)).toEpochSecond();
+    }
+
+    public ZonedDateTime localDateTimeToZonedDateTime(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.of(timezone));
     }
 }

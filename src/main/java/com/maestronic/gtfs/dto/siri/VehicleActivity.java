@@ -1,4 +1,4 @@
-package com.maestronic.gtfs.mapclass;
+package com.maestronic.gtfs.dto.siri;
 
 import com.maestronic.gtfs.util.Adapter1;
 

@@ -1,11 +1,10 @@
-package com.maestronic.gtfs.mapclass;
+package com.maestronic.gtfs.dto.siri;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
-import java.math.BigInteger;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ExceptionError implements Serializable {

@@ -1,7 +1,7 @@
 package com.maestronic.gtfs.service;
 
+import com.maestronic.gtfs.dto.siri.*;
 import com.maestronic.gtfs.entity.ConnectionTimetable;
-import com.maestronic.gtfs.mapclass.*;
 import com.maestronic.gtfs.repository.ConnectionTimetableRepository;
 import com.maestronic.gtfs.util.*;
 import org.apache.commons.csv.CSVFormat;

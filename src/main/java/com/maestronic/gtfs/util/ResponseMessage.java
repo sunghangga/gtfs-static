@@ -1,7 +1,7 @@
 package com.maestronic.gtfs.util;
 
-import com.maestronic.gtfs.mapclass.ErrorCondition;
-import com.maestronic.gtfs.mapclass.ExceptionError;
+import com.maestronic.gtfs.dto.siri.ErrorCondition;
+import com.maestronic.gtfs.dto.siri.ExceptionError;
 
 import java.util.HashMap;
 import java.util.Map;

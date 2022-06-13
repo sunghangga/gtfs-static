@@ -1,6 +1,6 @@
 package com.maestronic.gtfs.util;
 
-import com.maestronic.gtfs.mapclass.Gtfs;
+import com.maestronic.gtfs.dto.siri.Gtfs;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import com.sun.xml.bind.v2.WellKnownNamespace;
 

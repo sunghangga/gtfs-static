@@ -16,6 +16,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.List;
 
 @Service
 public class StopService {
@@ -40,7 +41,7 @@ public class StopService {
         }
     }
 
-    public Integer parseSaveData(String path) {
+    public Integer parseSaveData(String path, List<Stop> stopLocations) {
 
         getSession();
         int dataCount = 0;
@@ -70,6 +71,7 @@ public class StopService {
                         csvParser.getHeaderMap().containsKey("platform_code") ? csvRecord.get("platform_code") : ""
                 );
 
+                stopLocations.add(stop);
                 session.saveOrUpdate(stop);
                 // compare batch saved count
                 dataCount++;

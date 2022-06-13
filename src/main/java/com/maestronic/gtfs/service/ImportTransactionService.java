@@ -62,6 +62,7 @@ public class ImportTransactionService implements GlobalVariable {
     private ImportRepository importRepository;
     @Autowired
     private ImportDetailRepository importDetailRepository;
+    private List<Stop> stopLocations = new ArrayList<>();
 
     /**
      * Parsing and save data with transactional (rollback purpose)
@@ -125,12 +126,12 @@ public class ImportTransactionService implements GlobalVariable {
             }
             // Check if filepath contain stops
             if (fileInfo.containsKey(STOPS)) {
-                dataCount += stopService.parseSaveData(fileInfo.get(STOPS));
+                dataCount += stopService.parseSaveData(fileInfo.get(STOPS), stopLocations);
                 importComponent.getEntityList().add(Stop.TABLE_NAME);
             }
             // Check if filepath contain transfers
             if (fileInfo.containsKey(TRANSFERS)) {
-                dataCount += transferService.parseSaveData(fileInfo.get(TRANSFERS));
+                dataCount += transferService.parseSaveData(fileInfo.get(TRANSFERS), stopLocations);
                 importComponent.getEntityList().add(Transfer.TABLE_NAME);
             }
             // Check if filepath contain stop_times
