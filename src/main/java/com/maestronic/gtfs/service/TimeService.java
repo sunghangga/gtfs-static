@@ -75,11 +75,15 @@ public class TimeService {
         return LocalTime.parse(LocalTime.from(instant.atZone(ZoneId.of(timezone))).format(timeFormat));
     }
 
-    public ZonedDateTime durToZoneDateTime(Duration duration) {
-        DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        LocalDate nowDate = LocalDate.now(ZoneId.of(timezone));
-        LocalTime localTime = LocalTime.MIDNIGHT.plus(duration);
-        return ZonedDateTime.parse(LocalDateTime.of(nowDate, localTime).format(zoneFormat));
+    public String durToTime(Duration duration) {
+        long seconds = duration.getSeconds();
+        long absSeconds = Math.abs(seconds);
+        String positive = String.format(
+                "%d:%02d:%02d",
+                absSeconds / 3600,
+                (absSeconds % 3600) / 60,
+                absSeconds % 60);
+        return seconds < 0 ? "-" + positive : positive;
     }
 
     public ZonedDateTime durToZoneDateTime(Duration duration, String gtfsDate) {

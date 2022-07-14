@@ -111,8 +111,10 @@ public class JourneyController {
             Gtfs response = journeyService.getTripPlannerWithFare(
                     tripPlannerValidation.getOri_lat(),
                     tripPlannerValidation.getOri_lon(),
+                    tripPlannerValidation.getOri_name(),
                     tripPlannerValidation.getDes_lat(),
                     tripPlannerValidation.getDes_lon(),
+                    tripPlannerValidation.getDes_name(),
                     timeService.strToLocalDateTime(tripPlannerValidation.getDate_time()),
                     tripPlannerValidation.getType_of_trip());
 

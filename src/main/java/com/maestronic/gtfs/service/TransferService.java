@@ -62,10 +62,9 @@ public class TransferService {
                 count++;
             }
 
-            // Calculate transfer time by distance
-            // Assuming 1 meter = 1 second
+            // Calculate transfer time by distance (using normal walking speed)
             if (count > 1) {
-                transferTime = (int) GlobalHelper.computeGreatCircleDistance(fromLat, fromLon, toLat, toLon);
+                transferTime = (int) (GlobalHelper.computeGreatCircleDistance(fromLat, fromLon, toLat, toLon)/GlobalVariable.NORMAL_WALKING_SPEED);
                 break;
             }
         }

@@ -12,9 +12,13 @@ public class TripPlannerValidation {
     @NotNull
     private Double ori_lon;
     @NotNull
+    private String ori_name;
+    @NotNull
     private Double des_lat;
     @NotNull
     private Double des_lon;
+    @NotNull
+    private String des_name;
     @NotNull
     private String date_time;
     @NotNull

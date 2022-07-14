@@ -1,5 +1,8 @@
 package com.maestronic.gtfs.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public interface GlobalVariable {
 
     String XML_TYPE_DATA = "xml";
@@ -73,5 +76,21 @@ public interface GlobalVariable {
 
     // Trip planner
     int MAX_WALK_DISTANCE = 500;
-    String WALK_MODE = "WALK";
+    String WALK_MODE = "walk";
+    Map<String, String> MODE = new HashMap<String, String>() {{
+        put("walk", "Foot");
+        put("0", "Tram");
+        put("1", "Subway");
+        put("2", "Rail");
+        put("3", "Bus");
+        put("4", "Ferry");
+        put("5", "Cable Tram");
+        put("6", "Aerial Lift");
+        put("7", "Funicular");
+        put("11", "Trolleybus");
+        put("12", "Monorail");
+    }};
+    double NORMAL_WALKING_SPEED = 1.34112; // In meter per second (m/s)
+    String DEPARTURE_TRIP = "departure";
+    String ARRIVAL_TRIP = "arrival";
 }
