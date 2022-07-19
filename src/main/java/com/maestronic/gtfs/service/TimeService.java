@@ -99,6 +99,12 @@ public class TimeService {
         return ZonedDateTime.parse(localDateTime.format(zoneFormat));
     }
 
+    public ZonedDateTime concatDateDur(LocalDate date, Duration time) {
+        DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        LocalDateTime localDateTime = date.atStartOfDay().plus(time);
+        return ZonedDateTime.parse(localDateTime.format(zoneFormat));
+    }
+
     public ZonedDateTime localDateTimeZone() {
         DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         return ZonedDateTime.parse(ZonedDateTime.now(ZoneId.of(timezone)).format(zoneFormat));

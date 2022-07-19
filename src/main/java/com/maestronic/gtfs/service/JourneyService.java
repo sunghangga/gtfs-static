@@ -22,8 +22,8 @@ public class JourneyService implements GlobalVariable {
     @Autowired
     private TimeService timeService;
     ServiceDelivery serviceDelivery = new ServiceDelivery();
-    HashMap<UUID, Journey> journeyList = new HashMap<>();
-    List<UUID> resultList = new ArrayList<>();
+    HashMap<Integer, Journey> journeyList = new HashMap<>();
+    HashMap<Integer, String> resultList = new HashMap<>();
     List<JourneyParam> markedStops = new ArrayList<>();
     String day;
     int date;
@@ -35,31 +35,61 @@ public class JourneyService implements GlobalVariable {
     int maxExpectedResult = 5;
     int currentTransfers = 0;
     int allowedTransfers = 0;
+    int key = 0;
 
     public List<Map<String, Object>> getShapeJourneyWithStop(String agencyId, String vehicleId) {
         return journeyRepository.getShapeJourneyWithStop(agencyId, vehicleId);
     }
 
-    private void reconstructJourney() {
+    private void reconstructJourney(TreeMap<Integer, String> resultList, LocalDateTime dateTime) {
         List<TripPlanners> tripPlanners;
-        for (UUID key : resultList) {
+        Journey journey;
+        Journey prevJourney;
+        TripDetail tripDetail;
+        for (Integer key : resultList.keySet()) {
             tripPlanners = new ArrayList<>();
-            Journey journey = journeyList.get(key);
+            journey = journeyList.get(key);
             while (journey != null) {
+                tripDetail = new TripDetail(
+                        journey.getOperatorRef(),
+                        journey.getRouteRef(),
+                        journey.getRouteName(),
+                        journey.getDirectionRef(),
+                        journey.getTripId(),
+                        journey.getTripName(),
+                        journey.getStopId(),
+                        journey.getStopSequence(),
+                        journey.getWheelchairBoarding(),
+                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
+                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime())
+                );
+
                 tripPlanners.add(0,
                         new TripPlanners(
                                 MODE.get(journey.getMode()),
                                 journey.getStopName(),
+                                journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
+                                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
+                                journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime() :
+                                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()),
                                 null,
-                                null,
-                                null,
-                                null
+                                tripDetail
                         )
                 );
+
                 // If the stop is the first stop of journey
                 if (journey.getPrevKey() == null)
                     break;
-                journey = journeyList.get(journey.getPrevKey());
+
+                // Do check if current and previous key reach by walk then add path walk
+                // detect transfer without walk
+                prevJourney = journeyList.get(journey.getPrevKey());
+                if (!prevJourney.getTripId().equals(journey.getTripId())
+                        && !prevJourney.getStopId().equals(journey.getStopId())) {
+
+                }
+
+                journey = prevJourney;
             }
             TripPlannerDelivery tripPlannerDelivery = new TripPlannerDelivery(tripPlanners);
             serviceDelivery.getTripPlannerDeliveries().add(tripPlannerDelivery);
@@ -83,51 +113,74 @@ public class JourneyService implements GlobalVariable {
     private List<Tuple> getAllTripsByStops(List<JourneyParam> markedStopParams) {
         List<Tuple> allTripsByStop = journeyRepository.getTripsByStops(
                 markedStopParams,
-                tripType);
+                tripType,
+                day,
+                date);
         return allTripsByStop;
     }
 
-    private void addStops(UUID key, UUID prevId, Tuple markedStop) {
+    private List<Tuple> getAllTransferByStops(List<JourneyParam> markedStopParams) {
+        List<Tuple> allTripsByStop = journeyRepository.getTransfersByStop(
+                markedStopParams,
+                tripType,
+                day,
+                date);
+        return allTripsByStop;
+    }
+
+    private void addStops(Integer key, Integer prevKey, Tuple markedStop) {
         journeyList.put(key, new Journey(
                 key,
-                prevId,
+                prevKey,
                 markedStop.get("route_type").toString(),
                 markedStop.get("trip_id").toString(),
                 markedStop.get("stop_id").toString(),
                 markedStop.get("stop_name").toString(),
                 Integer.parseInt(markedStop.get("stop_sequence").toString()),
-                timeService.strTimeToDuration(markedStop.get("arrival_time").toString()),
-                timeService.strTimeToDuration(markedStop.get("departure_time").toString()),
+                timeService.strTimeToDuration(markedStop.get("aimed_arrival_time").toString()),
+                timeService.strTimeToDuration(markedStop.get("aimed_departure_time").toString()),
+                markedStop.get("agency_id").toString(),
+                markedStop.get("route_id").toString(),
+                markedStop.get("route_long_name").toString(),
+                GlobalHelper.directionName(Integer.parseInt(markedStop.get("direction_id").toString())),
+                markedStop.get("trip_headsign").toString(),
+                Integer.parseInt(markedStop.get("wheelchair_accessible").toString()),
+                markedStop.get("expected_arrival_time") == null ? null : timeService.unixToZoneDateTime(Long.parseLong(markedStop.get("expected_arrival_time").toString())),
+                markedStop.get("expected_departure_time") == null ? null : timeService.unixToZoneDateTime(Long.parseLong(markedStop.get("expected_departure_time").toString()))
         ));
     }
 
-    private void addMarkedStop(UUID key, UUID prevKey, Tuple markedStop) {
-        Duration arrivalTime = timeService.strTimeToDuration(markedStop.get("arrival_time").toString());
-        Duration departureTime = timeService.strTimeToDuration(markedStop.get("departure_time").toString());
+    private void addMarkedStop(Integer key, Integer prevKey, Tuple markedStop) {
         markedStops.add(new JourneyParam(
                 key,
                 prevKey,
                 markedStop.get("trip_id").toString(),
                 markedStop.get("stop_id").toString(),
                 Integer.parseInt(markedStop.get("stop_sequence").toString()),
-                arrivalTime,
-                departureTime
+                timeService.strTimeToDuration(markedStop.get("aimed_arrival_time").toString()),
+                timeService.strTimeToDuration(markedStop.get("aimed_departure_time").toString())
         ));
     }
 
     private void getFollowingStops(List<JourneyParam> markedStopParams) {
         // Find solution based on count result (get following stops)
         List<Tuple> allFollowingStops = getAllFollowingStopMultiTrip(markedStopParams);
-        UUID prevKey = null;
-        UUID key;
+        Integer prevKey = null;
+        Integer excludeStop = null;
         for (int i = 0; i < allFollowingStops.size(); i++) {
             Tuple allFollowingStop = allFollowingStops.get(i);
+
+            // Check if in this trip found solution, then skip next stop in this trip
+            Integer sourceKey = Integer.parseInt(allFollowingStop.get("key").toString());
+            if (excludeStop == sourceKey)
+                continue;
+
             // Get first UUID for each trips
-            if (i == 0 || !allFollowingStops.get(i-1).get("trip_id").equals(allFollowingStop.get("trip_id")))
-                prevKey = UUID.fromString(allFollowingStop.get("key").toString());
+            if (i == 0 || !allFollowingStops.get(i-1).get("key").equals(allFollowingStop.get("key")))
+                prevKey = sourceKey;
 
             // Add current stop to result journey
-            key = UUID.randomUUID();
+            key++;
             addStops(key, prevKey, allFollowingStop);
             addMarkedStop(key, prevKey, allFollowingStop);
             prevKey = key;
@@ -135,10 +188,13 @@ public class JourneyService implements GlobalVariable {
             // Do check the stop if near destination (possible reach by walk)
             if (GlobalHelper.computeGreatCircleDistance((double) allFollowingStop.get("stop_lat"),
                     (double) allFollowingStop.get("stop_lon"), destLat, destLon) < MAX_WALK_DISTANCE) {
-                resultList.add(key);
+                resultList.put(key, allFollowingStop.get("aimed_arrival_time").toString());
+                excludeStop = sourceKey;
                 countResult++;
-                if (countResult >= maxExpectedResult)
+                // Check if result is equal with expected result
+                if (countResult >= maxExpectedResult) {
                     return;
+                }
             }
         }
     }
@@ -151,8 +207,24 @@ public class JourneyService implements GlobalVariable {
         int allTripSize = allTripsByStop.size();
         if (allTripSize > 0) {
             for (Tuple trip : allTripsByStop) {
-                UUID key = UUID.randomUUID();
-                addMarkedStop(key, UUID.fromString(trip.get("key").toString()), trip);
+                key++;
+                addMarkedStop(key, Integer.parseInt(trip.get("source_key").toString()), trip);
+                addStops(key, Integer.parseInt(trip.get("source_key").toString()), trip);
+            }
+        }
+    }
+
+    private void getTransfersWithWalk(List<JourneyParam> markedStopParams) {
+        // Get all trips from the following stop loop
+        List<Tuple> allTripsByStop = getAllTransferByStops(markedStopParams);
+
+        // Find for next transfers no walk
+        int allTripSize = allTripsByStop.size();
+        if (allTripSize > 0) {
+            for (Tuple trip : allTripsByStop) {
+                key++;
+                addMarkedStop(key, Integer.parseInt(trip.get("source_key").toString()), trip);
+                addStops(key, Integer.parseInt(trip.get("source_key").toString()), trip);
             }
         }
     }
@@ -202,25 +274,25 @@ public class JourneyService implements GlobalVariable {
         date = timeService.localDateZoneGTFSByDateTime(dateTime);
         time = timeService.localTimeZoneGTFSByDateTime(dateTime);
 
-        // Get near stop by origin
-        List<Tuple> nearestStops = journeyRepository.getNearestStopFromLocation(originLat,
+        // Get near stops from origin
+        List<Tuple> nearestStopsOrigin = journeyRepository.getNearestStopFromLocation(originLat,
                 originLong,
                 day,
                 date,
                 time,
                 typeOfTrip);
 
-        if (nearestStops.size() > 0) {
+        if (nearestStopsOrigin.size() > 0) {
             // Add to list
-            for (Tuple nearestStop : nearestStops) {
-                UUID key = UUID.randomUUID();
+            for (Tuple nearestStop : nearestStopsOrigin) {
+                key++;
                 addMarkedStop(key, null, nearestStop);
                 addStops(key, null, nearestStop);
             }
 
             // Loop while maximum result reached
             List<JourneyParam> tempStops;
-            while (countResult < maxExpectedResult) {
+            while (true) {
                 tempStops = markedStops;
                 markedStops = new ArrayList<>();
                 // Find following stops
@@ -237,13 +309,25 @@ public class JourneyService implements GlobalVariable {
                 if (currentTransfers < allowedTransfers) {
                     tempStops = markedStops;
                     markedStops = new ArrayList<>();
+                    // Find transfers with no walk
                     getTransfersNoWalk(tempStops);
+                    // Find transfers with walk
+                    getTransfersWithWalk(tempStops);
                     currentTransfers++;
+                }
+
+                // Break looping if no solution exists
+                if (markedStops.size() < 1) {
+                    break;
                 }
             }
         }
 
-        reconstructJourney();
+        // Sorting journey by time arrival using treemap constructor
+        TreeMap<Integer, String> sortedTime = new TreeMap<>(resultList);
+
+        // Reconstruct journey list
+        reconstructJourney(sortedTime, dateTime);
 
         return new Gtfs(null, null, serviceDelivery);
     }

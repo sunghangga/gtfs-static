@@ -12,8 +12,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class JourneyParam {
 
-    private UUID key;
-    private UUID prev_key;
+    private Integer key;
+    private Integer prev_key;
     private String trip_id;
     private String stop_id;
     private int stop_sequence;

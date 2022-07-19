@@ -17,9 +17,7 @@ public interface GlobalVariable {
     String INBOUND = "INBOUND";
     String OUTBOUND = "OUTBOUND";
 
-    String INCOMING_AT = "INCOMING_AT";
     String STOPPED_AT = "STOPPED_AT";
-    String IN_TRANSIT_TO = "IN_TRANSIT_TO";
 
     // Path variable
     String PATH_DUMMY_VM = "static/data/vehiclemonitoring.csv";
@@ -70,10 +68,6 @@ public interface GlobalVariable {
     String STOPPLACES = "stopplaces";
     String PASSENGERSTOPASSIGNMENT = "passengerstopassignment";
 
-    // XML properties
-    String JAXP_SCHEMA_LANGUAGE = "http://java.sun.com/xml/jaxp/properties/schemaLanguage";
-    String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
-
     // Trip planner
     int MAX_WALK_DISTANCE = 500;
     String WALK_MODE = "walk";
@@ -92,5 +86,4 @@ public interface GlobalVariable {
     }};
     double NORMAL_WALKING_SPEED = 1.34112; // In meter per second (m/s)
     String DEPARTURE_TRIP = "departure";
-    String ARRIVAL_TRIP = "arrival";
 }
