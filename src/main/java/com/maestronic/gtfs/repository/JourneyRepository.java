@@ -249,7 +249,7 @@ public class JourneyRepository {
         }
 
         // Get trip location
-        String queryString = "SELECT temp_json.prev_key source_key, t.trip_id, st.stop_id, s.stop_name, r.route_type, st.stop_sequence, \n" +
+        String queryString = "SELECT * FROM (SELECT DISTINCT ON (res.trip_id) * FROM (SELECT DISTINCT ON (s.stop_id) temp_json.prev_key source_key, t.trip_id, st.stop_id, s.stop_name, r.route_type, st.stop_sequence, \n" +
                 "r.agency_id, r.route_id, r.route_long_name, t.direction_id, t.trip_headsign, t.wheelchair_accessible, \n" +
                 "cast(date_part('epoch', st.arrival_time) * INTERVAL '1 second' as varchar) as aimed_arrival_time, \n" +
                 "cast(date_part('epoch', st.departure_time) * INTERVAL '1 second' as varchar) as aimed_departure_time, \n" +
@@ -280,7 +280,9 @@ public class JourneyRepository {
                 "where st.stop_id = temp_json.stop_id \n" +
                 "and trip_json.trip_id is null \n" +
                 "and st." + timeOfTrip + " cast(temp_json.arrival_time as interval) \n" +
-                "order by st.arrival_time ASC";
+                "ORDER BY s.stop_id, st.arrival_time ASC) res\n" +
+                "ORDER BY res.trip_id, res.aimed_arrival_time ASC) srt \n" +
+                "ORDER BY srt.aimed_arrival_time asc";
 
         // Execute query builder
         Query query = em.createNativeQuery(queryString, Tuple.class);
@@ -306,7 +308,7 @@ public class JourneyRepository {
         }
 
         // Get trip location
-        String queryString = "SELECT temp_json.key source_key, t.trip_id, trf.to_stop_id stop_id, s.stop_name, r.route_type, st.stop_sequence, \n" +
+        String queryString = "select * from (select distinct on (temp_json.key, s.stop_id) temp_json.key source_key, t.trip_id, trf.to_stop_id stop_id, s.stop_name, r.route_type, st.stop_sequence, \n" +
                 "r.agency_id, r.route_id, r.route_long_name, t.direction_id, t.trip_headsign, t.wheelchair_accessible, \n" +
                 "cast(date_part('epoch', st.arrival_time) * INTERVAL '1 second' as varchar) as aimed_arrival_time, \n" +
                 "cast(date_part('epoch', st.departure_time) * INTERVAL '1 second' as varchar) as aimed_departure_time, \n" +
@@ -338,7 +340,8 @@ public class JourneyRepository {
                 "WHERE trf.from_stop_id = temp_json.stop_id \n" +
                 "and trip_json.trip_id is null \n" +
                 "and st." + timeOfTrip + " cast(temp_json.arrival_time as interval) + (trf.min_transfer_time * interval '1 second') \n" +
-                "ORDER BY st.arrival_time ASC";
+                "ORDER by temp_json.key, s.stop_id, st.arrival_time asc) res\n" +
+                "order by res.aimed_arrival_time asc";
 
         // Execute query builder
         Query query = em.createNativeQuery(queryString, Tuple.class);

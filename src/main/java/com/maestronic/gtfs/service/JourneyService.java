@@ -41,11 +41,12 @@ public class JourneyService implements GlobalVariable {
         return journeyRepository.getShapeJourneyWithStop(agencyId, vehicleId);
     }
 
-    private void reconstructJourney(TreeMap<Integer, String> resultList, LocalDateTime dateTime) {
+    private void reconstructJourney(HashMap<Integer, String> resultList, LocalDateTime dateTime) {
         List<TripPlanners> tripPlanners;
         Journey journey;
         Journey prevJourney;
         TripDetail tripDetail;
+        String prevMode;
         for (Integer key : resultList.keySet()) {
             tripPlanners = new ArrayList<>();
             journey = journeyList.get(key);
@@ -84,9 +85,9 @@ public class JourneyService implements GlobalVariable {
                 // Do check if current and previous key reach by walk then add path walk
                 // detect transfer without walk
                 prevJourney = journeyList.get(journey.getPrevKey());
-                if (!prevJourney.getTripId().equals(journey.getTripId())
-                        && !prevJourney.getStopId().equals(journey.getStopId())) {
-
+                prevMode = journey.getPrevMode();
+                if (prevMode == WALK_MODE) {
+                    prevJourney.setMode(prevMode);
                 }
 
                 journey = prevJourney;
@@ -128,11 +129,12 @@ public class JourneyService implements GlobalVariable {
         return allTripsByStop;
     }
 
-    private void addStops(Integer key, Integer prevKey, Tuple markedStop) {
+    private void addStops(Integer key, Integer prevKey, String prevMode, Tuple markedStop) {
         journeyList.put(key, new Journey(
                 key,
                 prevKey,
                 markedStop.get("route_type").toString(),
+                prevMode,
                 markedStop.get("trip_id").toString(),
                 markedStop.get("stop_id").toString(),
                 markedStop.get("stop_name").toString(),
@@ -181,7 +183,7 @@ public class JourneyService implements GlobalVariable {
 
             // Add current stop to result journey
             key++;
-            addStops(key, prevKey, allFollowingStop);
+            addStops(key, prevKey, null, allFollowingStop);
             addMarkedStop(key, prevKey, allFollowingStop);
             prevKey = key;
 
@@ -209,7 +211,7 @@ public class JourneyService implements GlobalVariable {
             for (Tuple trip : allTripsByStop) {
                 key++;
                 addMarkedStop(key, Integer.parseInt(trip.get("source_key").toString()), trip);
-                addStops(key, Integer.parseInt(trip.get("source_key").toString()), trip);
+                addStops(key, Integer.parseInt(trip.get("source_key").toString()), null, trip);
             }
         }
     }
@@ -223,10 +225,35 @@ public class JourneyService implements GlobalVariable {
         if (allTripSize > 0) {
             for (Tuple trip : allTripsByStop) {
                 key++;
-                addMarkedStop(key, Integer.parseInt(trip.get("source_key").toString()), trip);
-                addStops(key, Integer.parseInt(trip.get("source_key").toString()), trip);
+                Integer prevKey = Integer.parseInt(trip.get("source_key").toString());
+                addMarkedStop(key, prevKey, trip);
+                addStops(key, prevKey, WALK_MODE, trip);
             }
         }
+    }
+
+    // function to sort hashmap by values
+    private HashMap<Integer, String> sortHashMapByValue(HashMap<Integer, String> hm)
+    {
+        // Create a list from elements of HashMap
+        List<Map.Entry<Integer, String> > list =
+                new LinkedList<Map.Entry<Integer, String> >(hm.entrySet());
+
+        // Sort the list
+        Collections.sort(list, new Comparator<Map.Entry<Integer, String> >() {
+            public int compare(Map.Entry<Integer, String> o1,
+                               Map.Entry<Integer, String> o2)
+            {
+                return (o1.getValue()).compareTo(o2.getValue());
+            }
+        });
+
+        // put data from sorted list to hashmap
+        HashMap<Integer, String> temp = new LinkedHashMap<Integer, String>();
+        for (Map.Entry<Integer, String> aa : list) {
+            temp.put(aa.getKey(), aa.getValue());
+        }
+        return temp;
     }
 
     public Gtfs getTripPlannerWithFare(Double originLat,
@@ -236,18 +263,20 @@ public class JourneyService implements GlobalVariable {
                                                             Double destinationLong,
                                                             String destinationName,
                                                             LocalDateTime dateTime,
-                                                            String typeOfTrip) {
+                                                            String typeOfTrip,
+                                                            Integer limit) {
 
         tripType = typeOfTrip;
         destLat = destinationLat;
         destLon = destinationLong;
+        maxExpectedResult = limit == null ? maxExpectedResult : limit;
         // Check if origin and destination possible reach by walk
         long distance = (long) GlobalHelper.computeGreatCircleDistance(originLat, originLong, destinationLat, destinationLong);
         if (distance <= MAX_WALK_DISTANCE) {
             // Set TripPlannerDelivery
             List<TripPlanners> tripPlanners = new ArrayList<>();
             tripPlanners.add(new TripPlanners(
-                    MODE.get(WALK_MODE),
+                    WALK_MODE,
                     originName,
                     null,
                     timeService.localDateTimeToZonedDateTime(dateTime),
@@ -255,7 +284,7 @@ public class JourneyService implements GlobalVariable {
                     null
             ));
             tripPlanners.add(new TripPlanners(
-                    MODE.get(WALK_MODE),
+                    WALK_MODE,
                     destinationName,
                     timeService.localDateTimeToZonedDateTime(dateTime.plusSeconds((long) (distance/NORMAL_WALKING_SPEED))),
                     null,
@@ -287,7 +316,7 @@ public class JourneyService implements GlobalVariable {
             for (Tuple nearestStop : nearestStopsOrigin) {
                 key++;
                 addMarkedStop(key, null, nearestStop);
-                addStops(key, null, nearestStop);
+                addStops(key, null, null, nearestStop);
             }
 
             // Loop while maximum result reached
@@ -323,11 +352,8 @@ public class JourneyService implements GlobalVariable {
             }
         }
 
-        // Sorting journey by time arrival using treemap constructor
-        TreeMap<Integer, String> sortedTime = new TreeMap<>(resultList);
-
         // Reconstruct journey list
-        reconstructJourney(sortedTime, dateTime);
+        reconstructJourney(sortHashMapByValue(resultList), dateTime);
 
         return new Gtfs(null, null, serviceDelivery);
     }

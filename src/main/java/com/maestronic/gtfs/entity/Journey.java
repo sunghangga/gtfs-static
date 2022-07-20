@@ -15,6 +15,7 @@ public class Journey {
     private Integer key;
     private Integer prevKey;
     private String mode;
+    private String prevMode;
     private String tripId;
     private String stopId;
     private String stopName;

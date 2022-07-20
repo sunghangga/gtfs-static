@@ -116,7 +116,8 @@ public class JourneyController {
                     tripPlannerValidation.getDes_lon(),
                     tripPlannerValidation.getDes_name(),
                     timeService.strToLocalDateTime(tripPlannerValidation.getDate_time()),
-                    tripPlannerValidation.getType_of_trip());
+                    tripPlannerValidation.getType_of_trip(),
+                    tripPlannerValidation.getLimit());
 
             if (response == null) {
                 return new ResponseEntity<>(

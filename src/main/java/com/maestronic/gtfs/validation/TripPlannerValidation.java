@@ -2,6 +2,7 @@ package com.maestronic.gtfs.validation;
 
 import lombok.Data;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @Data
@@ -23,4 +24,6 @@ public class TripPlannerValidation {
     private String date_time;
     @NotNull
     private String type_of_trip;
+    @Min(1)
+    private Integer limit;
 }
