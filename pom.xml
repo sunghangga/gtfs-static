@@ -81,6 +81,17 @@
 			<version>2.10.1</version>
 		</dependency>
 
+		<!-- Redis -->
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-redis</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+		</dependency>
+
 		<!-- CHB Dependency	-->
 		<dependency>
 			<groupId>org.apache.commons</groupId>

@@ -105,11 +105,17 @@ public class JourneyRepository {
 
         EntityManager em = emf.createEntityManager();
 
-        String timeOfTrip = typeOfTrip.equals(GlobalVariable.DEPARTURE_TRIP) ? "departure_time >=" : "arrival_time <=";
+        String timeOfTrip = "departure_time >=";
+        String order = "asc";
+        if (!typeOfTrip.equals(GlobalVariable.DEPARTURE_TRIP)) {
+            timeOfTrip = "arrival_time <=";
+            order = "desc";
+        }
+
         // Get trip location
-        String queryString = "SELECT * FROM (SELECT DISTINCT ON (res.trip_id) * FROM (SELECT DISTINCT ON (s.stop_id)\n" +
-                "r.route_id, r.route_type, r.agency_id, r.route_long_name, t.trip_id, t.direction_id,\n" +
-                "t.trip_headsign, t.wheelchair_accessible, s.*, st.stop_sequence,\n" +
+        String queryString = "SELECT * FROM (SELECT DISTINCT ON (res.trip_id) * FROM (SELECT DISTINCT ON (s.stop_id) s.stop_id,\n" +
+                "r.route_id, r.route_type, r.agency_id, r.route_long_name, t.trip_id, t.direction_id, t.trip_headsign,\n" +
+                "t.wheelchair_accessible, s.stop_name, s.stop_lon, s.stop_lat, s.distance, st.stop_sequence,\n" +
                 "cast(date_part('epoch', st.arrival_time) * INTERVAL '1 second' as varchar) as aimed_arrival_time,\n" +
                 "cast(date_part('epoch', st.departure_time) * INTERVAL '1 second' as varchar) as aimed_departure_time,\n" +
                 "stu.arrival_time expected_arrival_time, stu.departure_time expected_departure_time\n" +
@@ -129,64 +135,16 @@ public class JourneyRepository {
                 "                AND exception_type = 2 \n" +
                 "       ) c ON c.service_id = t.service_id \n" +
                 "INNER JOIN stop_times st ON t.trip_id = st.trip_id \n" +
-                "INNER JOIN (SELECT stop_id, stop_code, stop_name, \n" +
+                "INNER JOIN (SELECT stop_id, stop_code, stop_name, stop_lon, stop_lat, \n" +
                 "   st_distancesphere(geometry(point(stop_lon, stop_lat)), geometry(point(" + originLong + ", " + originLat + "))) distance \n" +
                 "   FROM stops) s ON st.stop_id = s.stop_id \n" +
                 "left join trip_updates tu on tu.trip_id = t.trip_id \n" +
                 "left join stop_time_updates stu on tu.id = stu.trip_update_id and stu.stop_id = st.stop_id \n" +
                 "WHERE s.distance < " + GlobalHelper.MAX_WALK_DISTANCE + " \n" +
                 "AND st." + timeOfTrip + " ('" + time + "' + (s.distance/" + GlobalVariable.NORMAL_WALKING_SPEED + ") * interval '1 second') \n" +
-                "ORDER BY s.stop_id, st.departure_time ASC) res \n" +
-                "ORDER BY res.trip_id, res.aimed_arrival_time ASC) srt \n" +
+                "ORDER BY s.stop_id, st.departure_time " + order + ") res \n" +
+                "ORDER BY res.trip_id, res.aimed_arrival_time " + order + ") srt \n" +
                 "ORDER BY srt.aimed_arrival_time, srt.distance DESC";
-
-        // Execute query builder
-        Query query = em.createNativeQuery(queryString, Tuple.class);
-        List<Tuple> dataList = query.getResultList();
-
-        em.close();
-
-        return dataList;
-    }
-
-    public List<String> getNearestStopFromDestination(Double destinationLat, Double destinationLong) {
-
-        EntityManager em = emf.createEntityManager();
-
-        // Get trip location
-        String queryString = "SELECT s.stop_id\n" +
-                "FROM (SELECT stop_id, stop_code, stop_name, \n" +
-                "   st_distancesphere(geometry(point(stop_lon, stop_lat)), geometry(point(" + destinationLong + ", " + destinationLat + "))) distance \n" +
-                "   FROM stops) s \n" +
-                "WHERE s.distance < " + GlobalHelper.MAX_WALK_DISTANCE;
-
-        // Execute query builder
-        Query query = em.createNativeQuery(queryString, Tuple.class);
-        List<Tuple> dataList = query.getResultList();
-        List<String> stopList = new ArrayList<>();
-        dataList.stream().forEach(
-                tuple -> stopList.add(tuple.get("stop_id").toString())
-        );
-
-        em.close();
-
-        return stopList;
-    }
-
-    public List<Tuple> getAllFollowingStop(String tripId, String stopId) {
-        EntityManager em = emf.createEntityManager();
-
-        // Get trip location
-        String queryString = "SELECT r.route_type, t.trip_id, st.stop_id, s.stop_name, st.stop_sequence, s.stop_lat, s.stop_lon, " +
-                "cast(date_part('epoch', st.arrival_time) * INTERVAL '1 second' as varchar) as arrival_time, " +
-                "cast(date_part('epoch', st.departure_time) * INTERVAL '1 second' as varchar) as departure_time " +
-                "FROM trips t " +
-                "INNER JOIN routes r ON t.route_id = r.route_id " +
-                "INNER JOIN stop_times st ON t.trip_id = st.trip_id " +
-                "INNER JOIN stops s ON st.stop_id = s.stop_id " +
-                "WHERE st.stop_sequence > (SELECT stop_sequence FROM stop_times WHERE trip_id = '" + tripId + "' AND stop_id = '" + stopId + "') " +
-                "AND t.trip_id = '" + tripId + "' " +
-                "ORDER BY st.stop_sequence ASC";
 
         // Execute query builder
         Query query = em.createNativeQuery(queryString, Tuple.class);
@@ -210,7 +168,8 @@ public class JourneyRepository {
         }
 
         // Get trip location
-        String queryString = "SELECT temp_json.key, r.route_type, t.trip_id, st.stop_id, s.stop_name, st.stop_sequence, s.stop_lat, s.stop_lon, \n" +
+        String queryString = "SELECT temp_json.key, r.route_type, t.trip_id, st.stop_id, s.stop_name, " +
+                "st.stop_sequence, s.stop_lat, s.stop_lon, \n" +
                 "r.agency_id, r.route_id, r.route_long_name, t.direction_id, t.trip_headsign, t.wheelchair_accessible, \n" +
                 "cast(date_part('epoch', st.arrival_time) * INTERVAL '1 second' as varchar) as aimed_arrival_time, \n" +
                 "cast(date_part('epoch', st.departure_time) * INTERVAL '1 second' as varchar) as aimed_departure_time, \n" +
@@ -234,11 +193,17 @@ public class JourneyRepository {
         return dataList;
     }
 
-    public List<Tuple> getTripsByStops(List<JourneyParam> markedStopParams, String typeOfTrip, String day, int date) {
+    public List<Tuple> getTripsByStops(List<JourneyParam> markedStopParams, String typeOfTrip, String day, int date, String time) {
 
         EntityManager em = emf.createEntityManager();
 
-        String timeOfTrip = typeOfTrip.equals(GlobalVariable.DEPARTURE_TRIP) ? "departure_time >=" : "arrival_time <=";
+        String timeOfTrip = "";
+        String order = "asc";
+        if (!typeOfTrip.equals(GlobalVariable.DEPARTURE_TRIP)) {
+            timeOfTrip = "and st.arrival_time <= '" + time + "' \n";
+            order = "desc";
+        }
+
         String jsonStr = "";
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -249,7 +214,8 @@ public class JourneyRepository {
         }
 
         // Get trip location
-        String queryString = "SELECT * FROM (SELECT DISTINCT ON (res.trip_id) * FROM (SELECT DISTINCT ON (s.stop_id) temp_json.prev_key source_key, t.trip_id, st.stop_id, s.stop_name, r.route_type, st.stop_sequence, \n" +
+        String queryString = "SELECT * FROM (SELECT DISTINCT ON (res.trip_id) * FROM (SELECT DISTINCT ON (s.stop_id) " +
+                "temp_json.prev_key source_key, t.trip_id, st.stop_id, s.stop_name, s.stop_lat, s.stop_lon, r.route_type, st.stop_sequence, \n" +
                 "r.agency_id, r.route_id, r.route_long_name, t.direction_id, t.trip_headsign, t.wheelchair_accessible, \n" +
                 "cast(date_part('epoch', st.arrival_time) * INTERVAL '1 second' as varchar) as aimed_arrival_time, \n" +
                 "cast(date_part('epoch', st.departure_time) * INTERVAL '1 second' as varchar) as aimed_departure_time, \n" +
@@ -277,12 +243,13 @@ public class JourneyRepository {
                 "INNER JOIN routes r ON t.route_id = r.route_id \n" +
                 "left join trip_updates tu on tu.trip_id = t.trip_id \n" +
                 "left join stop_time_updates stu on tu.id = stu.trip_update_id and stu.stop_id = st.stop_id \n" +
-                "where st.stop_id = temp_json.stop_id \n" +
-                "and trip_json.trip_id is null \n" +
-                "and st." + timeOfTrip + " cast(temp_json.arrival_time as interval) \n" +
-                "ORDER BY s.stop_id, st.arrival_time ASC) res\n" +
-                "ORDER BY res.trip_id, res.aimed_arrival_time ASC) srt \n" +
-                "ORDER BY srt.aimed_arrival_time asc";
+                "where trip_json.trip_id is null \n" +
+                "and st.stop_id = temp_json.stop_id \n" +
+                "and st.departure_time >= cast(temp_json.arrival_time as interval) \n" +
+                timeOfTrip +
+                "ORDER BY s.stop_id, st.arrival_time " + order + ") res\n" +
+                "ORDER BY res.trip_id, res.aimed_arrival_time " + order + ") srt \n" +
+                "ORDER BY srt.aimed_arrival_time " + order;
 
         // Execute query builder
         Query query = em.createNativeQuery(queryString, Tuple.class);
@@ -293,12 +260,18 @@ public class JourneyRepository {
         return dataList;
     }
 
-    public List<Tuple> getTransfersByStop(List<JourneyParam> markedStopParams, String typeOfTrip, String day, int date) {
+    public List<Tuple> getTransfersByStop(List<JourneyParam> markedStopParams, String typeOfTrip, String day, int date, String time) {
 
         EntityManager em = emf.createEntityManager();
 
-        String timeOfTrip = typeOfTrip.equals(GlobalVariable.DEPARTURE_TRIP) ? "departure_time >=" : "arrival_time <=";
-        String jsonStr = "";
+        String timeOfTrip = "";
+        String order = "asc";
+        if (!typeOfTrip.equals(GlobalVariable.DEPARTURE_TRIP)) {
+            timeOfTrip = "and st.arrival_time <= '" + time + "' \n";
+            order = "desc";
+        }
+
+        String jsonStr;
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
@@ -308,7 +281,8 @@ public class JourneyRepository {
         }
 
         // Get trip location
-        String queryString = "select * from (select distinct on (temp_json.key, s.stop_id) temp_json.key source_key, t.trip_id, trf.to_stop_id stop_id, s.stop_name, r.route_type, st.stop_sequence, \n" +
+        String queryString = "select * from (select distinct on (temp_json.key, s.stop_id) temp_json.key source_key, " +
+                "t.trip_id, trf.to_stop_id stop_id, s.stop_name, s.stop_lat, s.stop_lon, r.route_type, st.stop_sequence, \n" +
                 "r.agency_id, r.route_id, r.route_long_name, t.direction_id, t.trip_headsign, t.wheelchair_accessible, \n" +
                 "cast(date_part('epoch', st.arrival_time) * INTERVAL '1 second' as varchar) as aimed_arrival_time, \n" +
                 "cast(date_part('epoch', st.departure_time) * INTERVAL '1 second' as varchar) as aimed_departure_time, \n" +
@@ -328,20 +302,18 @@ public class JourneyRepository {
                 "              WHERE date = " + date + " \n" +
                 "                AND exception_type = 2 \n" +
                 "       ) c ON c.service_id = t.service_id \n" +
-                "inner JOIN stop_times st ON t.trip_id = st.trip_id \n" +
-                "INNER JOIN transfers trf ON st.stop_id = trf.from_stop_id \n" +
-                "inner JOIN stops s ON trf.to_stop_id = s.stop_id \n" +
-                "left join json_to_recordset('" + jsonStr + "') as trip_json(trip_id varchar) \n" +
-                "       on t.trip_id = trip_json.trip_id \n" +
-                "left join json_to_recordset('" + jsonStr + "') as temp_json(key int, trip_id varchar, stop_id varchar, arrival_time varchar) \n" +
-                "       on st.stop_id = temp_json.stop_id \n" +
+                "inner join stop_times st on t.trip_id = st.trip_id \n" +
+                "inner join transfers trf on st.stop_id = trf.to_stop_id \n" +
+                "inner join stops s on trf.to_stop_id = s.stop_id \n" +
+                "left join json_to_recordset('" + jsonStr + "') as temp_json(key int, stop_id varchar, arrival_time varchar) \n" +
+                "       on trf.from_stop_id = temp_json.stop_id \n" +
                 "left join trip_updates tu on tu.trip_id = t.trip_id \n" +
                 "left join stop_time_updates stu on tu.id = stu.trip_update_id and stu.stop_id = st.stop_id \n" +
                 "WHERE trf.from_stop_id = temp_json.stop_id \n" +
-                "and trip_json.trip_id is null \n" +
-                "and st." + timeOfTrip + " cast(temp_json.arrival_time as interval) + (trf.min_transfer_time * interval '1 second') \n" +
-                "ORDER by temp_json.key, s.stop_id, st.arrival_time asc) res\n" +
-                "order by res.aimed_arrival_time asc";
+                "and st.departure_time >= cast(temp_json.arrival_time as interval) + (trf.min_transfer_time * interval '1 second') \n" +
+                timeOfTrip +
+                "ORDER by temp_json.key, s.stop_id, st.arrival_time " + order + ") res\n" +
+                "order by res.aimed_arrival_time " + order;
 
         // Execute query builder
         Query query = em.createNativeQuery(queryString, Tuple.class);

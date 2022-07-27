@@ -28,8 +28,10 @@ public class Journey {
     private String routeName;
     private String directionRef;
     private String tripName;
-//    private Vehicle vehicle;
     private Integer wheelchairBoarding;
     private ZonedDateTime expectedArrivalTime;
     private ZonedDateTime expectedDepartureTime;
+
+    private double stopLon;
+    private double stopLat;
 }

@@ -70,7 +70,9 @@ public interface GlobalVariable {
 
     // Trip planner
     int MAX_WALK_DISTANCE = 500;
+    int DEFAULT_LIMIT_RESULT_TRIP_PLANNER = 5;
     String WALK_MODE = "walk";
+    String DRIVE_MODE = "drive";
     Map<String, String> MODE = new HashMap<String, String>() {{
         put("walk", "Foot");
         put("0", "Tram");
@@ -86,4 +88,8 @@ public interface GlobalVariable {
     }};
     double NORMAL_WALKING_SPEED = 1.34112; // In meter per second (m/s)
     String DEPARTURE_TRIP = "departure";
+
+    // Redis variable
+    String PATH_DETAIL_WALK_KEY = "path_detail_walk";
+    String PATH_DETAIL_DRIVE_KEY = "path_detail_drive";
 }

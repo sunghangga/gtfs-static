@@ -1,7 +1,6 @@
 package com.maestronic.gtfs.service;
 
 import com.maestronic.gtfs.util.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -137,6 +136,7 @@ public class TimeService {
     }
 
     public ZonedDateTime localDateTimeToZonedDateTime(LocalDateTime localDateTime) {
-        return localDateTime.atZone(ZoneId.of(timezone));
+        DateTimeFormatter zoneFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        return ZonedDateTime.parse(localDateTime.atZone(ZoneId.of(timezone)).format(zoneFormat));
     }
 }

@@ -83,7 +83,7 @@ public class JourneyController {
         }
     }
 
-    @PostMapping(path = "api/gtfs/trip-planner", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(path = "api/gtfs/trip-planner", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> getTripPlannerWithFare(@Validated TripPlannerValidation tripPlannerValidation,
                                                          BindingResult bindingResult) {
 
