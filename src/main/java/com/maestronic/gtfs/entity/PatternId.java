@@ -1,15 +1,14 @@
 package com.maestronic.gtfs.entity;
 
+import com.maestronic.gtfs.compositeid.PatternIdCompositeId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
+@IdClass(PatternIdCompositeId.class)
 @Table(name = PatternId.TABLE_NAME)
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,6 +21,7 @@ public class PatternId {
     @Column(name = "trip_id")
     private String tripId;
 
+    @Id
     @Column(name = "pattern_id")
     private String patternId;
 

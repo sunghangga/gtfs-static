@@ -36,13 +36,17 @@ public class PatternIdService {
         }
     }
 
+    enum Header {
+        trip_id, pattern_id, pattern_name
+    }
+
     public Integer parseSaveData(String path) {
 
         getSession();
         int dataCount = 0;
         try (BufferedReader fileReader = new BufferedReader(new FileReader(path));
              CSVParser csvParser = new CSVParser(fileReader,
-                     CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
+                     CSVFormat.DEFAULT.withHeader(Header.class))) {
 
             // Insert new data
             for (CSVRecord csvRecord : csvParser) {

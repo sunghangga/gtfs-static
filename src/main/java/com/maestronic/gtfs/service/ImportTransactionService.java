@@ -192,6 +192,7 @@ public class ImportTransactionService implements GlobalVariable {
                 savedFileInfo.put(PATTERN_ID, 1);
             }
 
+
             // Print unsaved file
             for (Map.Entry<String, Integer> map : savedFileInfo.entrySet()) {
                 if (map.getValue() == 0) {
