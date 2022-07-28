@@ -63,6 +63,8 @@ public interface GlobalVariable {
     String DIRECTION_NAMES_EXCEPTIONS = "direction_names_exceptions.txt";
     String DIRECTIONS = "directions.txt";
     String STOP_ORDER_EXCEPTIONS = "stop_order_exceptions.txt";
+    String SIGNUP_PERIODS = "signup_periods.txt";
+    String PATTERN_ID = "pattern_id.txt";
     String DATAOWNER = "dataowner";
     String PLACES = "places";
     String STOPPLACES = "stopplaces";

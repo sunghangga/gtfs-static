@@ -51,6 +51,10 @@ public class ImportTransactionService implements GlobalVariable {
     @Autowired
     private StopOrderExceptionsService stopOrderExceptionsService;
     @Autowired
+    private SignupPeriodsService signupPeriodsService;
+    @Autowired
+    private PatternIdService patternIdService;
+    @Autowired
     private DataownerService dataOwnerService;
     @Autowired
     private PlaceService placeService;
@@ -74,85 +78,125 @@ public class ImportTransactionService implements GlobalVariable {
         int dataCount = 0;
         Map<String, String> fileInfo = new HashMap<>();
 
+        // To check which file is not saved
+        // 0 is not saved, 1 is saved into database
+        Map<String, Integer> savedFileInfo = new HashMap<>();
+
         try {
             for (String path: listPath) {
-                fileInfo.put(path.substring(path.lastIndexOf(java.io.File.separator) + 1), path);
+                String fileName = path.substring(path.lastIndexOf(java.io.File.separator) + 1);
+                fileInfo.put(fileName, path);
+                savedFileInfo.put(fileName, 0);
             }
 
             // Check if filepath contain agency data
             if (fileInfo.containsKey(AGENCY)) {
                 dataCount += agencyService.parseSaveData(fileInfo.get(AGENCY));
                 importComponent.getEntityList().add(Agency.TABLE_NAME);
+                savedFileInfo.put(AGENCY, 1);
             }
             // Check if filepath contain calendar data
             if (fileInfo.containsKey(CALENDAR)) {
                 dataCount += calendarService.parseSaveData(fileInfo.get(CALENDAR));
                 importComponent.getEntityList().add(Calendar.TABLE_NAME);
+                savedFileInfo.put(CALENDAR, 1);
             }
             // Check if filepath contain calendar_dates
             if (fileInfo.containsKey(CALENDAR_DATES)) {
                 dataCount += calendarDateService.parseSaveData(fileInfo.get(CALENDAR_DATES));
                 importComponent.getEntityList().add(CalendarDate.TABLE_NAME);
+                savedFileInfo.put(CALENDAR_DATES, 1);
             }
             // Check if filepath contain fare_attributes
             if (fileInfo.containsKey(FARE_ATTRIBUTES)) {
                 dataCount += fareAttributesService.parseSaveData(fileInfo.get(FARE_ATTRIBUTES));
                 importComponent.getEntityList().add(FareAttributes.TABLE_NAME);
+                savedFileInfo.put(FARE_ATTRIBUTES, 1);
             }
             // Check if filepath contain feed_info
             if (fileInfo.containsKey(FEED_INFO)) {
                 dataCount += feedInfoService.parseSaveData(fileInfo.get(FEED_INFO));
                 importComponent.getEntityList().add(FeedInfo.TABLE_NAME);
+                savedFileInfo.put(FEED_INFO, 1);
             }
             // Check if filepath contain routes
             if (fileInfo.containsKey(ROUTES)) {
                 dataCount += routeService.parseSaveData(fileInfo.get(ROUTES));
                 importComponent.getEntityList().add(Route.TABLE_NAME);
+                savedFileInfo.put(ROUTES, 1);
             }
             // Check if filepath contain fare_rules
             if (fileInfo.containsKey(FARE_RULES)) {
                 dataCount += fareRulesService.parseSaveData(fileInfo.get(FARE_RULES));
                 importComponent.getEntityList().add(FareRules.TABLE_NAME);
+                savedFileInfo.put(FARE_RULES, 1);
             }
             // Check if filepath contain shapes
             if (fileInfo.containsKey(SHAPES)) {
                 dataCount += shapeService.parseSaveData(fileInfo.get(SHAPES));
                 importComponent.getEntityList().add(Shape.TABLE_NAME);
+                savedFileInfo.put(SHAPES, 1);
             }
             // Check if filepath contain trips
             if (fileInfo.containsKey(TRIPS)) {
                 dataCount += tripService.parseSaveData(fileInfo.get(TRIPS));
                 importComponent.getEntityList().add(Trip.TABLE_NAME);
+                savedFileInfo.put(TRIPS, 1);
             }
             // Check if filepath contain stops
             if (fileInfo.containsKey(STOPS)) {
                 dataCount += stopService.parseSaveData(fileInfo.get(STOPS), stopLocations);
                 importComponent.getEntityList().add(Stop.TABLE_NAME);
+                savedFileInfo.put(STOPS, 1);
             }
             // Check if filepath contain transfers
             if (fileInfo.containsKey(TRANSFERS)) {
                 dataCount += transferService.parseSaveData(fileInfo.get(TRANSFERS), stopLocations);
                 importComponent.getEntityList().add(Transfer.TABLE_NAME);
+                savedFileInfo.put(TRANSFERS, 1);
             }
             // Check if filepath contain stop_times
             if (fileInfo.containsKey(STOP_TIMES)) {
                 dataCount += stopTimeService.parseSaveData(fileInfo.get(STOP_TIMES));
                 importComponent.getEntityList().add(StopTime.TABLE_NAME);
+                savedFileInfo.put(STOP_TIMES, 1);
             }
             // Check if filepath contain direction_names_exceptions
             if (fileInfo.containsKey(DIRECTION_NAMES_EXCEPTIONS)) {
                 dataCount += directionNamesExceptionsService.parseSaveData(fileInfo.get(DIRECTION_NAMES_EXCEPTIONS));
                 importComponent.getEntityList().add(DirectionNamesExceptions.TABLE_NAME);
+                savedFileInfo.put(DIRECTION_NAMES_EXCEPTIONS, 1);
             }
             // Check if filepath contain direction_names_exceptions
             if (fileInfo.containsKey(DIRECTIONS)) {
                 dataCount += directionsService.parseSaveData(fileInfo.get(DIRECTIONS));
                 importComponent.getEntityList().add(Directions.TABLE_NAME);
+                savedFileInfo.put(DIRECTIONS, 1);
             }
             // Check if filepath contain direction_names_exceptions
             if (fileInfo.containsKey(STOP_ORDER_EXCEPTIONS)) {
                 dataCount += stopOrderExceptionsService.parseSaveData(fileInfo.get(STOP_ORDER_EXCEPTIONS));
                 importComponent.getEntityList().add(StopOrderExceptions.TABLE_NAME);
+                savedFileInfo.put(STOP_ORDER_EXCEPTIONS, 1);
+            }
+            // Check if filepath contain signup_periods
+            if (fileInfo.containsKey(SIGNUP_PERIODS)) {
+                dataCount += signupPeriodsService.parseSaveData(fileInfo.get(SIGNUP_PERIODS));
+                importComponent.getEntityList().add(SignupPeriods.TABLE_NAME);
+                savedFileInfo.put(SIGNUP_PERIODS, 1);
+            }
+            // Check if filepath contain pattern_id
+            if (fileInfo.containsKey(PATTERN_ID)) {
+                dataCount += patternIdService.parseSaveData(fileInfo.get(PATTERN_ID));
+                importComponent.getEntityList().add(PatternId.TABLE_NAME);
+                savedFileInfo.put(PATTERN_ID, 1);
+            }
+
+            // Print unsaved file
+            for (Map.Entry<String, Integer> map : savedFileInfo.entrySet()) {
+                if (map.getValue() == 0) {
+                    Logger.warn("File " + map.getKey() + " not processed. No parser function for this file.");
+                }
             }
 
             // Set save data count
