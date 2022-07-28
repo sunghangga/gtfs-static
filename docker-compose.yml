@@ -16,6 +16,8 @@ services:
       - FILE_UPLOAD_DIR_GTFS=/tmp/GTFS/gtfs_upload/
       - FILE_UPLOAD_DIR_CHB=/tmp/CHB/chb_upload/
       - FILE_UPLOAD_DIR_PSA=/tmp/PSA/psa_upload/
+      - SPRING_REDIS_HOSTNAME=localhost
+      - SPRING_REDIS_PORT=6379
 
   gtfs-db:
     container_name: gtfs-db
