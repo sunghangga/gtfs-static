@@ -17,10 +17,24 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: connection_timetable(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: postgis; Type: EXTENSION; Schema: -; Owner: -
 --
 
-CREATE FUNCTION public.connection_timetable(param_stop_id character varying, param_timezone character varying) RETURNS TABLE(stop_id character varying, date numeric, direction_id smallint, trip_id character varying, route_id character varying, agency_id character varying, stop_sequence integer, trip_headsign character varying, first_stop_id character varying, last_stop_id character varying, departure_time interval, arrival_time interval, transportmode character varying, route_long_name character varying, stop_name character varying, stop_lat double precision, stop_lon double precision, first_stop_name character varying, last_stop_name character varying, disabledaccessible character varying, visuallyaccessible character varying)
+CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION postgis; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION postgis IS 'PostGIS geometry and geography spatial types and functions';
+
+
+--
+-- Name: connection_timetable(character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.connection_timetable(param_stop_id character varying) RETURNS TABLE(stop_id character varying, date numeric, direction_id smallint, trip_id character varying, route_id character varying, agency_id character varying, stop_sequence integer, trip_headsign character varying, first_stop_id character varying, last_stop_id character varying, departure_time interval, arrival_time interval, transportmode character varying, route_long_name character varying, stop_name character varying, stop_lat double precision, stop_lon double precision, first_stop_name character varying, last_stop_name character varying, disabledaccessible character varying, visuallyaccessible character varying)
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -58,7 +72,7 @@ BEGIN
      JOIN stop_times last_st ON t.trip_id::text = last_st.trip_id::text
      JOIN stops last_s ON last_st.stop_id::text = last_s.stop_id::text
      JOIN calendar_dates cd ON t.service_id::text = cd.service_id::text
-  WHERE q.quaystatus::text = 'available'::text AND (cd.date::character varying::date + st.arrival_time) > timezone(param_timezone::text, CURRENT_TIMESTAMP) AND first_st.stop_sequence = (( SELECT min(stop_times.stop_sequence) AS min
+  WHERE q.quaystatus::text = 'available'::text AND first_st.stop_sequence = (( SELECT min(stop_times.stop_sequence) AS min
            FROM stop_times
           WHERE t.trip_id::text = stop_times.trip_id::text)) AND last_st.stop_sequence = (( SELECT max(stop_times.stop_sequence) AS max
            FROM stop_times
@@ -71,122 +85,338 @@ BEGIN
 END; $$;
 
 
-ALTER FUNCTION public.connection_timetable(param_stop_id character varying, param_timezone character varying) OWNER TO postgres;
+ALTER FUNCTION public.connection_timetable(param_stop_id character varying) OWNER TO postgres;
 
 --
--- Name: vehicle_monitoring(character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: next_bus_map_by_stop(character varying, character varying[], date, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.vehicle_monitoring(param_agency_id character varying, param_timezone character varying) RETURNS TABLE(vehicle_label character varying, trip_start_date character varying, agency_id character varying, route_id character varying, route_long_name character varying, trip_id character varying, trip_headsign character varying, stop_id character varying, stop_name character varying, position_latitude double precision, position_longitude double precision, stop_sequence integer, first_stop_id character varying, first_stop_name character varying, last_stop_id character varying, last_stop_name character varying, aimed_departure_time interval, departure_delay integer, expected_departure_time bigint, aimed_arrival_time interval, arrival_delay integer, expected_arrival_time bigint, direction_id integer, current_status character varying, "timestamp" bigint)
+CREATE FUNCTION public.next_bus_map_by_stop(_stopcode character varying, _arrayserviceid character varying[], _tripstartdate date, _timezone character varying) RETURNS TABLE(route_short_name character varying, trip_schedule_relationship character varying, stop_schedule_relationship character varying, rounded_minute integer)
     LANGUAGE plpgsql
     AS $$
-BEGIN
-    RETURN QUERY 
-		  SELECT vp.vehicle_label,
-    vp.trip_start_date,
-    r.agency_id,
-    vp.route_id,
-    r.route_long_name,
-    tu.trip_id,
-    t.trip_headsign,
-    stu.stop_id,
-    s.stop_name,
-    vp.position_latitude,
-    vp.position_longitude,
-    stu.stop_sequence,
-    first_s.stop_id AS first_stop_id,
-    first_s.stop_name AS first_stop_name,
-    last_s.stop_id AS last_stop_id,
-    last_s.stop_name AS last_stop_name,
-    st.departure_time AS aimed_departure_time,
-    stu.departure_delay,
-    stu.departure_time AS expected_departure_time,
-    st.arrival_time AS aimed_arrival_time,
-    stu.arrival_delay,
-    stu.arrival_time AS expected_arrival_time,
-    vp.direction_id,
-    vp.current_status,
-    vp."timestamp"
-   FROM vehicle_positions vp
-     JOIN trip_updates tu ON vp.trip_id::text = tu.trip_id::text
-     JOIN stop_time_updates stu ON tu.id = stu.trip_update_id
-     JOIN trips t ON tu.trip_id::text = t.trip_id::text
-     JOIN routes r ON t.route_id::text = r.route_id::text
-     JOIN stop_times st ON tu.trip_id::text = st.trip_id::text AND stu.stop_id::text = st.stop_id::text AND stu.stop_sequence = st.stop_sequence
-     JOIN stops s ON stu.stop_id::text = s.stop_id::text
-     JOIN stop_times first_st ON tu.trip_id::text = first_st.trip_id::text
-     JOIN stops first_s ON first_st.stop_id::text = first_s.stop_id::text
-     JOIN stop_times last_st ON tu.trip_id::text = last_st.trip_id::text
-     JOIN stops last_s ON last_st.stop_id::text = last_s.stop_id::text
-  WHERE (vp.trip_start_date::date + last_st.arrival_time) >= timezone(param_timezone::text, CURRENT_TIMESTAMP) AND stu.stop_sequence >= vp.current_stop_sequence AND first_st.stop_sequence = (( SELECT min(stop_times.stop_sequence) AS min
-           FROM stop_times
-          WHERE tu.trip_id::text = stop_times.trip_id::text)) AND last_st.stop_sequence = (( SELECT max(stop_times.stop_sequence) AS max
-           FROM stop_times
-          WHERE tu.trip_id::text = stop_times.trip_id::text))
-					and r.agency_id = param_agency_id
-  ORDER BY vp.vehicle_label, tu.id, stu.stop_sequence;
-END; $$;
+begin
+	return query
+	select
+	x.route_short_name,
+	x.trip_schedule_relationship,
+	x.stop_schedule_relationship,
+	cast(
+		(case when extract(second from x.diff) > 40 then extract(minute from x.diff) + 1 else extract(minute from x.diff) end)
+		+ (extract(hour from x.diff) * 60) + (extract(day from x.diff) * 24 * 60) as int
+	) as rounded_minute
+	
+	from (
+		select
+		r.route_short_name,
+		COALESCE(tu.schedule_relationship, '') as trip_schedule_relationship,
+		COALESCE(stu.schedule_relationship, '') as stop_schedule_relationship,
+		(_tripstartdate + st.departure_time) + (interval '1 seconds' * COALESCE(stu.departure_delay, 0)) as departure_date_time_delay,
+		(_tripstartdate + st.departure_time) + (interval '1 seconds' * COALESCE(stu.departure_delay, 0)) - (timezone(_timezone, CURRENT_TIMESTAMP(0))) as diff
+		
+		from stops s
+		join stop_times st on st.stop_id = s.stop_id
+		join trips t on t.trip_id = st.trip_id
+		join routes r on r.route_id = t.route_id
+		
+		left join trip_updates tu on tu.trip_id = t.trip_id
+		left join stop_time_updates stu on stu.trip_update_id = tu.id and stu.stop_id = s.stop_id
+		
+		where st.pickup_type is distinct from '1'
+		and st.drop_off_type is distinct from '1'
+		and r.route_type = '3'
+		and s.stop_code = _stopcode
+		and t.service_id = any(_arrayserviceid)
+	) as x
+	where x.departure_date_time_delay >= timezone(_timezone, CURRENT_TIMESTAMP(0));
+end;
+$$;
 
 
-ALTER FUNCTION public.vehicle_monitoring(param_agency_id character varying, param_timezone character varying) OWNER TO postgres;
+ALTER FUNCTION public.next_bus_map_by_stop(_stopcode character varying, _arrayserviceid character varying[], _tripstartdate date, _timezone character varying) OWNER TO postgres;
 
 --
--- Name: vehicle_monitoring(character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: next_bus_per_route(character varying, character varying, character varying[], date, character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.vehicle_monitoring(param_agency_id character varying, param_vehicle_id character varying, param_timezone character varying) RETURNS TABLE(vehicle_label character varying, trip_start_date character varying, agency_id character varying, route_id character varying, route_long_name character varying, trip_id character varying, trip_headsign character varying, stop_id character varying, stop_name character varying, position_latitude double precision, position_longitude double precision, stop_sequence integer, first_stop_id character varying, first_stop_name character varying, last_stop_id character varying, last_stop_name character varying, aimed_departure_time interval, departure_delay integer, expected_departure_time bigint, aimed_arrival_time interval, arrival_delay integer, expected_arrival_time bigint, direction_id integer, current_status character varying, "timestamp" bigint)
+CREATE FUNCTION public.next_bus_per_route(_routeshortname character varying, _stopcode character varying, _arrayserviceid character varying[], _tripstartdate date, _timezone character varying) RETURNS TABLE(departure_date_time timestamp without time zone, departure_date_time_delay timestamp without time zone, trip_schedule_relationship character varying, stop_schedule_relationship character varying, rounded_minute integer)
     LANGUAGE plpgsql
     AS $$
-BEGIN
-    RETURN QUERY 
-		  SELECT vp.vehicle_label,
-    vp.trip_start_date,
-    r.agency_id,
-    vp.route_id,
-    r.route_long_name,
-    tu.trip_id,
-    t.trip_headsign,
-    stu.stop_id,
-    s.stop_name,
-    vp.position_latitude,
-    vp.position_longitude,
-    stu.stop_sequence,
-    first_s.stop_id AS first_stop_id,
-    first_s.stop_name AS first_stop_name,
-    last_s.stop_id AS last_stop_id,
-    last_s.stop_name AS last_stop_name,
-    st.departure_time AS aimed_departure_time,
-    stu.departure_delay,
-    stu.departure_time AS expected_departure_time,
-    st.arrival_time AS aimed_arrival_time,
-    stu.arrival_delay,
-    stu.arrival_time AS expected_arrival_time,
-    vp.direction_id,
-    vp.current_status,
-    vp."timestamp"
-   FROM vehicle_positions vp
-     JOIN trip_updates tu ON vp.trip_id::text = tu.trip_id::text
-     JOIN stop_time_updates stu ON tu.id = stu.trip_update_id
-     JOIN trips t ON tu.trip_id::text = t.trip_id::text
-     JOIN routes r ON t.route_id::text = r.route_id::text
-     JOIN stop_times st ON tu.trip_id::text = st.trip_id::text AND stu.stop_id::text = st.stop_id::text AND stu.stop_sequence = st.stop_sequence
-     JOIN stops s ON stu.stop_id::text = s.stop_id::text
-     JOIN stop_times first_st ON tu.trip_id::text = first_st.trip_id::text
-     JOIN stops first_s ON first_st.stop_id::text = first_s.stop_id::text
-     JOIN stop_times last_st ON tu.trip_id::text = last_st.trip_id::text
-     JOIN stops last_s ON last_st.stop_id::text = last_s.stop_id::text
-  WHERE (vp.trip_start_date::date + last_st.arrival_time) >= timezone(param_timezone::text, CURRENT_TIMESTAMP) AND stu.stop_sequence >= vp.current_stop_sequence AND first_st.stop_sequence = (( SELECT min(stop_times.stop_sequence) AS min
-           FROM stop_times
-          WHERE tu.trip_id::text = stop_times.trip_id::text)) AND last_st.stop_sequence = (( SELECT max(stop_times.stop_sequence) AS max
-           FROM stop_times
-          WHERE tu.trip_id::text = stop_times.trip_id::text))
-					and r.agency_id = param_agency_id
-					and vp.vehicle_label = param_vehicle_id
-  ORDER BY vp.vehicle_label, tu.id, stu.stop_sequence;
-END; $$;
+begin
+	return query
+	select
+	x.departure_date_time,
+	x.departure_date_time_delay,
+	x.trip_schedule_relationship,
+	x.stop_schedule_relationship,
+	cast(
+		(case when extract(second from x.diff) > 40 then extract(minute from x.diff) + 1 else extract(minute from x.diff) end)
+		+ (extract(hour from x.diff) * 60) + (extract(day from x.diff) * 24 * 60) as int
+	) as rounded_minute
+	
+	from (
+		select
+		COALESCE(tu.schedule_relationship, '') as trip_schedule_relationship,
+		COALESCE(stu.schedule_relationship, '') as stop_schedule_relationship,
+		(_tripstartdate + st.departure_time) as departure_date_time,
+		(_tripstartdate + st.departure_time) + (interval '1 seconds' * COALESCE(stu.departure_delay, 0)) as departure_date_time_delay,
+		(_tripstartdate + st.departure_time) + (interval '1 seconds' * COALESCE(stu.departure_delay, 0)) - (timezone(_timezone, CURRENT_TIMESTAMP(0))) as diff
+		
+		from stop_times st
+		join trips t on t.trip_id = st.trip_id
+		join routes r on r.route_id = t.route_id
+		join stops s on s.stop_id = st.stop_id
+		
+		left join trip_updates tu on tu.trip_id = t.trip_id
+		left join stop_time_updates stu on stu.trip_update_id = tu.id and stu.stop_id = s.stop_id
+		
+		where st.pickup_type is distinct from '1'
+		and st.drop_off_type is distinct from '1'
+		and r.route_type = '3'
+		and r.route_short_name = _routeshortname
+		and s.stop_code = _stopcode
+		and t.service_id = any(_arrayserviceid)
+	) as x
+	where x.departure_date_time_delay >= timezone(_timezone, CURRENT_TIMESTAMP(0));
+end;
+$$;
 
 
-ALTER FUNCTION public.vehicle_monitoring(param_agency_id character varying, param_vehicle_id character varying, param_timezone character varying) OWNER TO postgres;
+ALTER FUNCTION public.next_bus_per_route(_routeshortname character varying, _stopcode character varying, _arrayserviceid character varying[], _tripstartdate date, _timezone character varying) OWNER TO postgres;
+
+--
+-- Name: next_bus_per_trip_head_sign(character varying, character varying, character varying, character varying[], date, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.next_bus_per_trip_head_sign(_routeshortname character varying, _stopcode character varying, _tripheadsign character varying, _arrayserviceid character varying[], _tripstartdate date, _timezone character varying) RETURNS TABLE(departure_date_time timestamp without time zone, departure_date_time_delay timestamp without time zone, trip_schedule_relationship character varying, stop_schedule_relationship character varying, rounded_minute integer)
+    LANGUAGE plpgsql
+    AS $$
+begin
+	return query
+	select
+	x.departure_date_time,
+	x.departure_date_time_delay,
+	x.trip_schedule_relationship,
+	x.stop_schedule_relationship,
+	cast(
+		(case when extract(second from x.diff) > 40 then extract(minute from x.diff) + 1 else extract(minute from x.diff) end)
+		+ (extract(hour from x.diff) * 60) + (extract(day from x.diff) * 24 * 60) as int
+	) as rounded_minute
+	
+	from (
+		select
+		COALESCE(tu.schedule_relationship, '') as trip_schedule_relationship,
+		COALESCE(stu.schedule_relationship, '') as stop_schedule_relationship,
+		(_tripstartdate + st.departure_time) as departure_date_time,
+		(_tripstartdate + st.departure_time) + (interval '1 seconds' * COALESCE(stu.departure_delay, 0)) as departure_date_time_delay,
+		(_tripstartdate + st.departure_time) + (interval '1 seconds' * COALESCE(stu.departure_delay, 0)) - (timezone(_timezone, CURRENT_TIMESTAMP(0))) as diff
+		
+		from stop_times st
+		join trips t on t.trip_id = st.trip_id
+		join routes r on r.route_id = t.route_id
+		join stops s on s.stop_id = st.stop_id
+		
+		left join trip_updates tu on tu.trip_id = t.trip_id
+		left join stop_time_updates stu on stu.trip_update_id = tu.id and stu.stop_id = s.stop_id
+		
+		where st.pickup_type is distinct from '1'
+		and st.drop_off_type is distinct from '1'
+		and r.route_type = '3'
+		and r.route_short_name = _routeshortname
+		and s.stop_code = _stopcode
+		and t.trip_headsign = _tripheadsign
+		and t.service_id = any(_arrayserviceid)
+	) as x
+	where x.departure_date_time_delay >= timezone(_timezone, CURRENT_TIMESTAMP(0));
+end;
+$$;
+
+
+ALTER FUNCTION public.next_bus_per_trip_head_sign(_routeshortname character varying, _stopcode character varying, _tripheadsign character varying, _arrayserviceid character varying[], _tripstartdate date, _timezone character varying) OWNER TO postgres;
+
+--
+-- Name: vehicle_monitoring(character varying, bigint); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.vehicle_monitoring(param_agency_id character varying, param_current_timestamp bigint) RETURNS TABLE(vehicle_label character varying, trip_start_date character varying, agency_id character varying, route_id character varying, route_long_name character varying, trip_id character varying, trip_headsign character varying, wheelchair_boarding integer, stop_id character varying, stop_name character varying, position_latitude double precision, position_longitude double precision, stop_sequence integer, first_stop_id character varying, first_stop_name character varying, last_stop_id character varying, last_stop_name character varying, aimed_departure_time interval, departure_delay integer, expected_departure_time bigint, aimed_arrival_time interval, arrival_delay integer, expected_arrival_time bigint, trip_schedule_relationship character varying, stop_schedule_relationship character varying, direction_id integer, current_status character varying, "timestamp" bigint)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return QUERY 
+		  select
+	vp.vehicle_label,
+	vp.trip_start_date,
+	r.agency_id,
+	vp.route_id,
+	r.route_long_name,
+	tu.trip_id,
+	t.trip_headsign,
+	s.wheelchair_boarding,
+	stu.stop_id,
+	s.stop_name,
+	vp.position_latitude,
+	vp.position_longitude,
+	stu.stop_sequence,
+	first_s.stop_id as first_stop_id,
+	first_s.stop_name as first_stop_name,
+	last_s.stop_id as last_stop_id,
+	last_s.stop_name as last_stop_name,
+	st.departure_time as aimed_departure_time,
+	stu.departure_delay,
+	stu.departure_time as expected_departure_time,
+	st.arrival_time as aimed_arrival_time,
+	stu.arrival_delay,
+	stu.arrival_time as expected_arrival_time,
+	tu.schedule_relationship AS trip_schedule_relationship,
+    stu.schedule_relationship AS stop_schedule_relationship,
+	vp.direction_id,
+	vp.current_status,
+	vp."timestamp"
+from
+	vehicle_positions vp
+join trip_updates tu on
+	vp.trip_id::text = tu.trip_id::text
+join stop_time_updates stu on
+	tu.id = stu.trip_update_id
+join trips t on
+	tu.trip_id::text = t.trip_id::text
+join routes r on
+	t.route_id::text = r.route_id::text
+join stop_times st on
+	tu.trip_id::text = st.trip_id::text
+	and stu.stop_id::text = st.stop_id::text
+	and st.stop_sequence = stu.stop_sequence
+join stops s on
+	stu.stop_id::text = s.stop_id::text
+join stop_times first_st on
+	tu.trip_id::text = first_st.trip_id::text
+join stops first_s on
+	first_st.stop_id::text = first_s.stop_id::text
+join stop_times last_st on
+	tu.trip_id::text = last_st.trip_id::text
+join stops last_s on
+	last_st.stop_id::text = last_s.stop_id::text
+where
+	stu.stop_sequence >= vp.current_stop_sequence
+	and vp."timestamp" >= param_current_timestamp
+--	and (stu.arrival_time >= param_current_timestamp or stu.departure_time >= param_current_timestamp)
+	and first_st.stop_sequence = (
+	select
+		min(stop_times.stop_sequence) as min
+	from
+		stop_times
+	where
+		tu.trip_id::text = stop_times.trip_id::text)
+	and last_st.stop_sequence = (
+	select
+		max(stop_times.stop_sequence) as max
+	from
+		stop_times
+	where
+		tu.trip_id::text = stop_times.trip_id::text)
+	and r.agency_id = param_agency_id
+order by
+	vp.vehicle_label,
+	tu.id,
+	stu.stop_sequence;
+end;
+
+$$;
+
+
+ALTER FUNCTION public.vehicle_monitoring(param_agency_id character varying, param_current_timestamp bigint) OWNER TO postgres;
+
+--
+-- Name: vehicle_monitoring(character varying, character varying, bigint); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.vehicle_monitoring(param_agency_id character varying, param_vehicle_id character varying, param_current_timestamp bigint) RETURNS TABLE(vehicle_label character varying, trip_start_date character varying, agency_id character varying, route_id character varying, route_long_name character varying, trip_id character varying, trip_headsign character varying, wheelchair_boarding integer, stop_id character varying, stop_name character varying, position_latitude double precision, position_longitude double precision, stop_sequence integer, first_stop_id character varying, first_stop_name character varying, last_stop_id character varying, last_stop_name character varying, aimed_departure_time interval, departure_delay integer, expected_departure_time bigint, aimed_arrival_time interval, arrival_delay integer, expected_arrival_time bigint, trip_schedule_relationship character varying, stop_schedule_relationship character varying, direction_id integer, current_status character varying, "timestamp" bigint)
+    LANGUAGE plpgsql
+    AS $$
+begin
+    return QUERY 
+		  select
+	vp.vehicle_label,
+	vp.trip_start_date,
+	r.agency_id,
+	vp.route_id,
+	r.route_long_name,
+	tu.trip_id,
+	t.trip_headsign,
+	s.wheelchair_boarding,
+	stu.stop_id,
+	s.stop_name,
+	vp.position_latitude,
+	vp.position_longitude,
+	stu.stop_sequence,
+	first_s.stop_id as first_stop_id,
+	first_s.stop_name as first_stop_name,
+	last_s.stop_id as last_stop_id,
+	last_s.stop_name as last_stop_name,
+	st.departure_time as aimed_departure_time,
+	stu.departure_delay,
+	stu.departure_time as expected_departure_time,
+	st.arrival_time as aimed_arrival_time,
+	stu.arrival_delay,
+	stu.arrival_time as expected_arrival_time,
+	tu.schedule_relationship AS trip_schedule_relationship,
+    stu.schedule_relationship AS stop_schedule_relationship,
+	vp.direction_id,
+	vp.current_status,
+	vp."timestamp"
+from
+	vehicle_positions vp
+join trip_updates tu on
+	vp.trip_id::text = tu.trip_id::text
+join stop_time_updates stu on
+	tu.id = stu.trip_update_id
+join trips t on
+	tu.trip_id::text = t.trip_id::text
+join routes r on
+	t.route_id::text = r.route_id::text
+join stop_times st on
+	tu.trip_id::text = st.trip_id::text
+	and stu.stop_id::text = st.stop_id::text
+	and st.stop_sequence = stu.stop_sequence
+join stops s on
+	stu.stop_id::text = s.stop_id::text
+join stop_times first_st on
+	tu.trip_id::text = first_st.trip_id::text
+join stops first_s on
+	first_st.stop_id::text = first_s.stop_id::text
+join stop_times last_st on
+	tu.trip_id::text = last_st.trip_id::text
+join stops last_s on
+	last_st.stop_id::text = last_s.stop_id::text
+where
+	stu.stop_sequence >= vp.current_stop_sequence
+	and vp."timestamp" >= param_current_timestamp
+--	and (stu.arrival_time >= param_current_timestamp or stu.departure_time >= param_current_timestamp)
+	and first_st.stop_sequence = (
+	select
+		min(stop_times.stop_sequence) as min
+	from
+		stop_times
+	where
+		tu.trip_id::text = stop_times.trip_id::text)
+	and last_st.stop_sequence = (
+	select
+		max(stop_times.stop_sequence) as max
+	from
+		stop_times
+	where
+		tu.trip_id::text = stop_times.trip_id::text)
+	and r.agency_id = param_agency_id
+	and vp.vehicle_label = param_vehicle_id
+order by
+	vp.vehicle_label,
+	tu.id,
+	stu.stop_sequence;
+end;
+
+$$;
+
+
+ALTER FUNCTION public.vehicle_monitoring(param_agency_id character varying, param_vehicle_id character varying, param_current_timestamp bigint) OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -197,7 +427,6 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.agency (
-    id integer NOT NULL,
     agency_id character varying(255),
     agency_name character varying(255) NOT NULL,
     agency_url character varying(255) NOT NULL,
@@ -212,33 +441,11 @@ CREATE TABLE public.agency (
 ALTER TABLE public.agency OWNER TO postgres;
 
 --
--- Name: agency_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.agency_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.agency_id_seq OWNER TO postgres;
-
---
--- Name: agency_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.agency_id_seq OWNED BY public.agency.id;
-
-
---
 -- Name: alerts; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.alerts (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     start bigint,
     "end" bigint,
     cause character varying(20),
@@ -246,7 +453,8 @@ CREATE TABLE public.alerts (
     url character varying(300),
     header_text character varying(1000),
     description_text character varying(4000),
-    entity_id character varying(100)
+    entity_id character varying(100),
+    "timestamp" bigint
 );
 
 
@@ -257,12 +465,12 @@ ALTER TABLE public.alerts OWNER TO postgres;
 --
 
 CREATE SEQUENCE public.alerts_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.alerts_id_seq OWNER TO postgres;
@@ -352,7 +560,8 @@ CREATE SEQUENCE public.dataowner_id_seq
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.dataowner_id_seq OWNER TO postgres;
@@ -365,11 +574,39 @@ ALTER SEQUENCE public.dataowner_id_seq OWNED BY public.dataowner.id;
 
 
 --
+-- Name: direction_names_exceptions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.direction_names_exceptions (
+    route_name character varying(255) NOT NULL,
+    direction_id smallint NOT NULL,
+    direction_name character varying(255),
+    direction_do smallint
+);
+
+
+ALTER TABLE public.direction_names_exceptions OWNER TO postgres;
+
+--
+-- Name: directions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directions (
+    route_id character varying(255) NOT NULL,
+    direction_id smallint NOT NULL,
+    direction character varying(255),
+    route_short_name character varying(255)
+);
+
+
+ALTER TABLE public.directions OWNER TO postgres;
+
+--
 -- Name: entity_selectors; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.entity_selectors (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     agency_id character varying(15),
     route_id character varying(64),
     route_type integer,
@@ -391,12 +628,12 @@ ALTER TABLE public.entity_selectors OWNER TO postgres;
 --
 
 CREATE SEQUENCE public.entity_selectors_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.entity_selectors_id_seq OWNER TO postgres;
@@ -592,7 +829,8 @@ CREATE SEQUENCE public.passengerstopassignment_id_seq
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.passengerstopassignment_id_seq OWNER TO postgres;
@@ -627,6 +865,19 @@ CREATE TABLE public.pathways (
 ALTER TABLE public.pathways OWNER TO postgres;
 
 --
+-- Name: pattern_id; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pattern_id (
+    trip_id character varying NOT NULL,
+    pattern_id character varying NOT NULL,
+    pattern_name character varying
+);
+
+
+ALTER TABLE public.pattern_id OWNER TO postgres;
+
+--
 -- Name: places; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -651,7 +902,8 @@ CREATE SEQUENCE public.places_id_seq
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.places_id_seq OWNER TO postgres;
@@ -749,7 +1001,8 @@ CREATE SEQUENCE public.quays_id_seq
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.quays_id_seq OWNER TO postgres;
@@ -799,13 +1052,26 @@ CREATE TABLE public.shapes (
 ALTER TABLE public.shapes OWNER TO postgres;
 
 --
+-- Name: signup_periods; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.signup_periods (
+    sign_id character varying NOT NULL,
+    from_date bigint,
+    to_date bigint
+);
+
+
+ALTER TABLE public.signup_periods OWNER TO postgres;
+
+--
 -- Name: stop_time_updates; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.stop_time_updates (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     stop_sequence integer,
-    stop_id character varying(10),
+    stop_id character varying(30),
     arrival_delay integer,
     arrival_time bigint,
     arrival_uncertainty integer,
@@ -813,7 +1079,7 @@ CREATE TABLE public.stop_time_updates (
     departure_time bigint,
     departure_uncertainty integer,
     schedule_relationship character varying(9),
-    trip_update_id integer
+    trip_update_id bigint
 );
 
 
@@ -830,8 +1096,8 @@ CREATE TABLE public.stop_times (
     stop_id character varying(255) NOT NULL,
     stop_sequence integer NOT NULL,
     stop_headsign character varying(255),
-    pickup_type integer NOT NULL,
-    drop_off_type integer NOT NULL,
+    pickup_type integer,
+    drop_off_type integer,
     continuous_pickup integer,
     continuous_drop_off integer,
     shape_dist_traveled double precision,
@@ -872,7 +1138,7 @@ ALTER TABLE public.stops OWNER TO postgres;
 --
 
 CREATE TABLE public.trip_updates (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     trip_id character varying(64),
     route_id character varying(64),
     direction_id integer,
@@ -895,7 +1161,7 @@ ALTER TABLE public.trip_updates OWNER TO postgres;
 --
 
 CREATE TABLE public.vehicle_positions (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     trip_id character varying(64),
     route_id character varying(64),
     direction_id integer,
@@ -927,36 +1193,43 @@ ALTER TABLE public.vehicle_positions OWNER TO postgres;
 --
 
 CREATE VIEW public.stop_monitoring AS
- SELECT stu.stop_id,
-    stu.stop_sequence,
+ SELECT COALESCE(vp.vehicle_label, tu.vehicle_label) AS vehicle_label,
+    stu.stop_id,
     tu.trip_id,
     tu.direction_id,
     tu.trip_start_date,
     tu.trip_start_time,
     tu.route_id,
     r.agency_id,
-    tu.vehicle_label,
+    COALESCE(vp.current_stop_sequence, 0) AS current_stop_sequence,
+    stu.stop_sequence,
+    st_ori.stop_sequence AS first_stop_sequence,
+    st_dest.stop_sequence AS last_stop_sequence,
+    tu.schedule_relationship AS trip_schedule_relationship,
+    stu.schedule_relationship AS stop_schedule_relationship,
     vp.current_status,
-    r.route_long_name,
+    s.stop_name,
+    vp.occupancy_status,
+    st.arrival_time AS aimed_arrival_time,
+    stu.arrival_time AS expected_arrival_time,
+    stu.arrival_delay,
+    st.departure_time AS aimed_departure_time,
+    stu.departure_time AS expected_departure_time,
+    stu.departure_delay,
     st_ori.stop_id AS origin_stop_id,
     s_ori.stop_name AS origin_stop_name,
     st_dest.stop_id AS destination_stop_id,
     s_dest.stop_name AS destination_stop_name,
+    r.route_long_name,
     vp.congestion_level,
     COALESCE(vp.position_longitude, (0)::double precision) AS position_longitude,
     COALESCE(vp.position_latitude, (0)::double precision) AS position_latitude,
     COALESCE(vp.position_bearing, (0)::double precision) AS position_bearing,
-    vp.occupancy_status,
-    s.stop_name,
     s.stop_lon,
     s.stop_lat,
-    st.arrival_time AS aimed_arrival_time,
-    stu.arrival_time AS expected_arrival_time,
-    st.departure_time AS aimed_departure_time,
-    stu.departure_time AS expected_departure_time,
     tu."timestamp"
-   FROM (((((((((public.stop_time_updates stu
-     JOIN public.trip_updates tu ON ((tu.id = stu.trip_update_id)))
+   FROM (((((((((public.trip_updates tu
+     LEFT JOIN public.stop_time_updates stu ON ((stu.trip_update_id = tu.id)))
      LEFT JOIN public.vehicle_positions vp ON (((vp.trip_id)::text = (tu.trip_id)::text)))
      JOIN public.routes r ON (((r.route_id)::text = (tu.route_id)::text)))
      JOIN public.stop_times st ON ((((st.trip_id)::text = (tu.trip_id)::text) AND ((st.stop_id)::text = (stu.stop_id)::text) AND (st.stop_sequence = stu.stop_sequence))))
@@ -965,7 +1238,7 @@ CREATE VIEW public.stop_monitoring AS
      JOIN public.stops s_ori ON (((s_ori.stop_id)::text = (st_ori.stop_id)::text)))
      JOIN public.stop_times st_dest ON (((st_dest.trip_id)::text = (tu.trip_id)::text)))
      JOIN public.stops s_dest ON (((s_dest.stop_id)::text = (st_dest.stop_id)::text)))
-  WHERE (((to_date((tu.trip_start_date)::text, 'YYYYMMDD'::text) + st_dest.arrival_time) >= timezone('Europe/Amsterdam'::text, CURRENT_TIMESTAMP)) AND (st_ori.stop_sequence = ( SELECT min(stop_times.stop_sequence) AS min
+  WHERE (((stu.stop_sequence >= vp.current_stop_sequence) OR (vp.current_stop_sequence IS NULL)) AND (st_ori.stop_sequence = ( SELECT min(stop_times.stop_sequence) AS min
            FROM public.stop_times
           WHERE ((stop_times.trip_id)::text = (tu.trip_id)::text))) AND (st_dest.stop_sequence = ( SELECT max(stop_times.stop_sequence) AS max
            FROM public.stop_times
@@ -975,16 +1248,32 @@ CREATE VIEW public.stop_monitoring AS
 ALTER TABLE public.stop_monitoring OWNER TO postgres;
 
 --
+-- Name: stop_order_exceptions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.stop_order_exceptions (
+    stop_id character varying(255) NOT NULL,
+    route_name character varying(255),
+    direction_name character varying(255),
+    direction_do smallint,
+    stop_name character varying(255),
+    stop_do smallint
+);
+
+
+ALTER TABLE public.stop_order_exceptions OWNER TO postgres;
+
+--
 -- Name: stop_time_updates_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
 CREATE SEQUENCE public.stop_time_updates_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.stop_time_updates_id_seq OWNER TO postgres;
@@ -1039,7 +1328,8 @@ CREATE SEQUENCE public.stopplaces_id_seq
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.stopplaces_id_seq OWNER TO postgres;
@@ -1056,7 +1346,6 @@ ALTER SEQUENCE public.stopplaces_id_seq OWNED BY public.stopplaces.id;
 --
 
 CREATE TABLE public.transfers (
-    id integer NOT NULL,
     from_stop_id character varying(255) NOT NULL,
     to_stop_id character varying(255) NOT NULL,
     from_route_id character varying(255),
@@ -1069,28 +1358,6 @@ CREATE TABLE public.transfers (
 
 
 ALTER TABLE public.transfers OWNER TO postgres;
-
---
--- Name: transfers_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.transfers_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.transfers_id_seq OWNER TO postgres;
-
---
--- Name: transfers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.transfers_id_seq OWNED BY public.transfers.id;
-
 
 --
 -- Name: translations; Type: TABLE; Schema: public; Owner: postgres
@@ -1114,12 +1381,12 @@ ALTER TABLE public.translations OWNER TO postgres;
 --
 
 CREATE SEQUENCE public.trip_updates_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
-    CACHE 1;
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.trip_updates_id_seq OWNER TO postgres;
@@ -1154,16 +1421,55 @@ CREATE TABLE public.trips (
 ALTER TABLE public.trips OWNER TO postgres;
 
 --
--- Name: vehicle_positions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: tts_file; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE SEQUENCE public.vehicle_positions_id_seq
+CREATE TABLE public.tts_file (
+    id integer NOT NULL,
+    category character varying(255) NOT NULL,
+    text text NOT NULL,
+    file_name character varying(255) NOT NULL,
+    expired_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone
+);
+
+
+ALTER TABLE public.tts_file OWNER TO postgres;
+
+--
+-- Name: tts_file_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.tts_file_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
+
+
+ALTER TABLE public.tts_file_id_seq OWNER TO postgres;
+
+--
+-- Name: tts_file_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.tts_file_id_seq OWNED BY public.tts_file.id;
+
+
+--
+-- Name: vehicle_positions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.vehicle_positions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+    CYCLE;
 
 
 ALTER TABLE public.vehicle_positions_id_seq OWNER TO postgres;
@@ -1176,11 +1482,15 @@ ALTER SEQUENCE public.vehicle_positions_id_seq OWNED BY public.vehicle_positions
 
 
 --
--- Name: agency id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: vehicles; Type: TABLE; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.agency ALTER COLUMN id SET DEFAULT nextval('public.agency_id_seq'::regclass);
+CREATE TABLE public.vehicles (
+    vehicle_id character varying NOT NULL
+);
 
+
+ALTER TABLE public.vehicles OWNER TO postgres;
 
 --
 -- Name: alerts id; Type: DEFAULT; Schema: public; Owner: postgres
@@ -1253,17 +1563,17 @@ ALTER TABLE ONLY public.stopplaces ALTER COLUMN id SET DEFAULT nextval('public.s
 
 
 --
--- Name: transfers id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.transfers ALTER COLUMN id SET DEFAULT nextval('public.transfers_id_seq'::regclass);
-
-
---
 -- Name: trip_updates id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.trip_updates ALTER COLUMN id SET DEFAULT nextval('public.trip_updates_id_seq'::regclass);
+
+
+--
+-- Name: tts_file id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tts_file ALTER COLUMN id SET DEFAULT nextval('public.tts_file_id_seq'::regclass);
 
 
 --
@@ -1279,14 +1589,6 @@ ALTER TABLE ONLY public.vehicle_positions ALTER COLUMN id SET DEFAULT nextval('p
 
 ALTER TABLE ONLY public.agency
     ADD CONSTRAINT agency_agency_id_key UNIQUE (agency_id);
-
-
---
--- Name: agency agency_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.agency
-    ADD CONSTRAINT agency_pkey PRIMARY KEY (id);
 
 
 --
@@ -1319,6 +1621,22 @@ ALTER TABLE ONLY public.calendar
 
 ALTER TABLE ONLY public.dataowner
     ADD CONSTRAINT dataowner_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: direction_names_exceptions direction_names_exceptions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.direction_names_exceptions
+    ADD CONSTRAINT direction_names_exceptions_pkey PRIMARY KEY (route_name, direction_id);
+
+
+--
+-- Name: directions directions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directions
+    ADD CONSTRAINT directions_pkey PRIMARY KEY (route_id, direction_id);
 
 
 --
@@ -1386,6 +1704,14 @@ ALTER TABLE ONLY public.pathways
 
 
 --
+-- Name: pattern_id pattern_id_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pattern_id
+    ADD CONSTRAINT pattern_id_pkey PRIMARY KEY (trip_id, pattern_id);
+
+
+--
 -- Name: places places_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1415,6 +1741,22 @@ ALTER TABLE ONLY public.routes
 
 ALTER TABLE ONLY public.shapes
     ADD CONSTRAINT shapes_pkey PRIMARY KEY (shape_id, shape_pt_sequence);
+
+
+--
+-- Name: signup_periods signup_periods_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.signup_periods
+    ADD CONSTRAINT signup_periods_pkey PRIMARY KEY (sign_id);
+
+
+--
+-- Name: stop_order_exceptions stop_order_exceptions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.stop_order_exceptions
+    ADD CONSTRAINT stop_order_exceptions_pkey PRIMARY KEY (stop_id);
 
 
 --
@@ -1450,14 +1792,6 @@ ALTER TABLE ONLY public.stops
 
 
 --
--- Name: transfers transfers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.transfers
-    ADD CONSTRAINT transfers_pkey PRIMARY KEY (id);
-
-
---
 -- Name: trip_updates trip_updates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1474,11 +1808,27 @@ ALTER TABLE ONLY public.trips
 
 
 --
+-- Name: tts_file tts_file_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tts_file
+    ADD CONSTRAINT tts_file_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: vehicle_positions vehicle_positions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.vehicle_positions
     ADD CONSTRAINT vehicle_positions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: vehicles vehicles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vehicles
+    ADD CONSTRAINT vehicles_pkey PRIMARY KEY (vehicle_id);
 
 
 --
@@ -1489,10 +1839,10 @@ CREATE INDEX shapes_shape_id_idx ON public.shapes USING btree (shape_id);
 
 
 --
--- Name: stop_time_updates_stop_id_stop_sequence_trip_update_id_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: stop_time_updates_index1; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX stop_time_updates_stop_id_stop_sequence_trip_update_id_idx ON public.stop_time_updates USING btree (trip_update_id, stop_id, stop_sequence);
+CREATE INDEX stop_time_updates_index1 ON public.stop_time_updates USING btree (trip_update_id, stop_id, stop_sequence, schedule_relationship);
 
 
 --
@@ -1500,6 +1850,13 @@ CREATE INDEX stop_time_updates_stop_id_stop_sequence_trip_update_id_idx ON publi
 --
 
 CREATE INDEX stop_times_arrival_time_idx ON public.stop_times USING btree (stop_id, arrival_time, stop_sequence);
+
+
+--
+-- Name: trip_updates_trip_id_schedule_relationship_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX trip_updates_trip_id_schedule_relationship_idx ON public.trip_updates USING btree (trip_id, schedule_relationship);
 
 
 --
