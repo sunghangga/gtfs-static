@@ -8,6 +8,12 @@ All notable changes to this application will be documented in this file.
 
 ## [2.1.1] - 2022-04-18
 
+#### Added
+
+- Add API Trip Planner
+
+## [2.1.1] - 2022-04-18
+
 #### Updated
 
 - Add parameter "approx" for API VM
