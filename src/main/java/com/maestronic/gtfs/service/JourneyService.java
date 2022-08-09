@@ -100,19 +100,22 @@ public class JourneyService implements GlobalVariable {
         Journey prevJourney;
         TripDetail tripDetail = new TripDetail();
         List<Trips> trips;
-        ZonedDateTime expectedArrivalTime = null;
-        ZonedDateTime aimedDepartureTime = null;
-        ZonedDateTime aimedArrivalTime = null;
+        ZonedDateTime expectedArrivalTime;
+        ZonedDateTime aimedDepartureTime;
+        ZonedDateTime aimedArrivalTime;
+        double distance;
+        long distanceTime;
         for (Integer key : resultList.keySet()) {
             tripPlanners = new ArrayList<>();
             journey = journeyList.get(key);
 
             // Check if destination location not same as last stop in journey
-            double distance = GlobalHelper.computeGreatCircleDistance(journey.getStopLat(), journey.getStopLon(), destLat, destLon);
+            distance = GlobalHelper.computeGreatCircleDistance(journey.getStopLat(), journey.getStopLon(), destLat, destLon);
             if (distance != 0) {
+                distanceTime = (long) (distance/NORMAL_WALKING_SPEED);
                 // Add destination stop in trip to mapping class
-                expectedArrivalTime = journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime().plusSeconds((long) (distance/NORMAL_WALKING_SPEED)) :
-                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()).plusSeconds((long) (distance/NORMAL_WALKING_SPEED));
+                expectedArrivalTime = journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime().plusSeconds(distanceTime) :
+                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()).plusSeconds(distanceTime);
                 aimedDepartureTime = timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime());
                 aimedArrivalTime = timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime());
                 tripDetail = new TripDetail(
@@ -188,7 +191,7 @@ public class JourneyService implements GlobalVariable {
 
                 // If prev stop have different trip with current stop
                 prevJourney = journey.getPrevKey() != null ? journeyList.get(journey.getPrevKey()) : null;
-                if (journey.getTripId() != prevJourney.getTripId()) {
+                if (prevJourney == null || !journey.getTripId().equals(prevJourney.getTripId())) {
                     tripPlanners.add(0,
                             new TripPlanners(
                                     MODE.get(journey.getMode()),
@@ -214,6 +217,8 @@ public class JourneyService implements GlobalVariable {
                     // Detect transfer with walk
                     if (journey.getPrevMode() == WALK_MODE) {
                         // Trip details for previous stop
+                        distance = GlobalHelper.computeGreatCircleDistance(prevJourney.getStopLat(), prevJourney.getStopLon(), journey.getStopLat(), journey.getStopLon());
+                        distanceTime = (long) (distance/NORMAL_WALKING_SPEED);
                         trips = new ArrayList<>();
                         trips.add(new Trips(
                                 prevJourney.getStopName(),
@@ -235,14 +240,19 @@ public class JourneyService implements GlobalVariable {
                                         timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedDepartureTime())
                                 )
                         ));
+                        expectedArrivalTime = prevJourney.getExpectedDepartureTime() != null ? prevJourney.getExpectedDepartureTime().plusSeconds(distanceTime) :
+                                timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedDepartureTime()).plusSeconds(distanceTime);
+                        tripDetail.setAimedDepartureTime(tripDetail.getAimedDepartureTime().plusSeconds(distanceTime));
                         trips.add(new Trips(
                                 journey.getStopName(),
-                                journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
-                                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
+                                expectedArrivalTime,
                                 journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime() :
                                         timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()),
                                 tripDetail
                         ));
+                        // Re-set arrival time in next journey
+                        tripPlanners.get(0).getTrips().get(0).setExpectedArrivalTime(expectedArrivalTime);
+                        tripPlanners.get(0).getTrips().get(0).setTripDetail(tripDetail);
                         // Get path walk in redis if exists and add to trip planners
                         tripPlanners.add(0,
                                 new TripPlanners(
@@ -251,8 +261,7 @@ public class JourneyService implements GlobalVariable {
                                         journey.getStopName(),
                                         prevJourney.getExpectedDepartureTime() != null ? prevJourney.getExpectedDepartureTime() :
                                                 timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedDepartureTime()),
-                                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
-                                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
+                                        expectedArrivalTime,
                                         getPathDetailWalkRedis(prevJourney.getStopLon(), prevJourney.getStopLat(), journey.getStopLon(), journey.getStopLat()),
                                         trips
                                 )
@@ -283,13 +292,14 @@ public class JourneyService implements GlobalVariable {
             // Check if source location not same as first stop in journey
             distance = GlobalHelper.computeGreatCircleDistance(oriLat, oriLon, journey.getStopLat(), journey.getStopLon());
             if (distance != 0) {
+                distanceTime = (long) (distance/NORMAL_WALKING_SPEED);
                 // Add source stop in trip to mapping class
                 trips = new ArrayList<>();
                 trips.add(new Trips(
                         originName,
                         null,
-                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime().minusSeconds((long) (distance/NORMAL_WALKING_SPEED)) :
-                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()).minusSeconds((long) (distance/NORMAL_WALKING_SPEED)),
+                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime().minusSeconds(distanceTime) :
+                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()).minusSeconds(distanceTime),
                         null
                 ));
                 trips.add(new Trips(
@@ -305,8 +315,8 @@ public class JourneyService implements GlobalVariable {
                                 MODE.get(WALK_MODE),
                                 originName,
                                 journey.getStopName(),
-                                journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime().minusSeconds((long) (distance/NORMAL_WALKING_SPEED)) :
-                                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()).minusSeconds((long) (distance/NORMAL_WALKING_SPEED)),
+                                journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime().minusSeconds(distanceTime) :
+                                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()).minusSeconds(distanceTime),
                                 journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
                                         timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
                                 getPathWalk(oriLon, oriLat, journey.getStopLon(), journey.getStopLat()),
@@ -505,6 +515,7 @@ public class JourneyService implements GlobalVariable {
         // Check if origin and destination possible reach by walk
         long distance = (long) GlobalHelper.computeGreatCircleDistance(originLat, originLong, destinationLat, destinationLong);
         if (distance <= MAX_WALK_DISTANCE) {
+            long distanceTime = (long) (distance/NORMAL_WALKING_SPEED);
             // Set TripPlannerDelivery
             List<Trips> trips = new ArrayList<>();
             trips.add(new Trips(
@@ -515,7 +526,7 @@ public class JourneyService implements GlobalVariable {
             ));
             trips.add(new Trips(
                     destinationName,
-                    timeService.localDateTimeToZonedDateTime(dateTime.plusSeconds((long) (distance/NORMAL_WALKING_SPEED))),
+                    timeService.localDateTimeToZonedDateTime(dateTime.plusSeconds(distanceTime)),
                     null,
                     null
             ));
@@ -526,7 +537,7 @@ public class JourneyService implements GlobalVariable {
                     originName,
                     destinationName,
                     timeService.localDateTimeToZonedDateTime(dateTime),
-                    timeService.localDateTimeToZonedDateTime(dateTime.plusSeconds((long) (distance/NORMAL_WALKING_SPEED))),
+                    timeService.localDateTimeToZonedDateTime(dateTime.plusSeconds(distanceTime)),
                     getPathWalk(originLong, originLat, destinationLong, destinationLat),
                     trips
             ));

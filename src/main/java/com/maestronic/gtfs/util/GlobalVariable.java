@@ -75,8 +75,8 @@ public interface GlobalVariable {
     int DEFAULT_LIMIT_RESULT_TRIP_PLANNER = 5;
     String WALK_MODE = "walk";
     String STAY_MODE = "stay";
-    String DRIVE_MODE = "drive";
     Map<String, String> MODE = new HashMap<String, String>() {{
+        put("stay", "Stay");
         put("walk", "Foot");
         put("0", "Tram");
         put("1", "Subway");
