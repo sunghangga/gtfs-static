@@ -16,7 +16,7 @@ public class Shape {
     private String shapeId;
 
     @Column(name = "shape_pt_lat")
-    private double shapesPtLat;
+    private double shapePtLat;
 
     @Column(name = "shape_pt_lon")
     private double shapePtLon;
@@ -31,9 +31,9 @@ public class Shape {
     public Shape() {
     }
 
-    public Shape(String shapeId, double shapesPtLat, double shapePtLon, Integer shapePtSequence, double shapeDistTraveled) {
+    public Shape(String shapeId, double shapePtLat, double shapePtLon, Integer shapePtSequence, double shapeDistTraveled) {
         this.shapeId = shapeId;
-        this.shapesPtLat = shapesPtLat;
+        this.shapePtLat = shapePtLat;
         this.shapePtLon = shapePtLon;
         this.shapePtSequence = shapePtSequence;
         this.shapeDistTraveled = shapeDistTraveled;

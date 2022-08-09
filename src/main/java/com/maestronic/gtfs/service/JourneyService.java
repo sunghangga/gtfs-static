@@ -1,5 +1,6 @@
 package com.maestronic.gtfs.service;
 
+import com.maestronic.gtfs.dto.custom.StopTimeLocationDto;
 import com.maestronic.gtfs.entity.Journey;
 import com.maestronic.gtfs.dto.gtfs.*;
 import com.maestronic.gtfs.entity.JourneyParam;
@@ -13,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.persistence.Tuple;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 @Service
@@ -32,6 +34,10 @@ public class JourneyService implements GlobalVariable {
 
     public List<Map<String, Object>> getShapeJourneyWithStop(String agencyId, String vehicleId) {
         return journeyRepository.getShapeJourneyWithStop(agencyId, vehicleId);
+    }
+
+    private String keyGenerateCoordinate(double oriLon, double oriLat, double destLon, double destLat) {
+        return oriLon + ":" + oriLat + ":" + destLon + ":" + destLat;
     }
 
     private Object getPathWalk(double originLon, double originLat, double destLon, double destLat) {
@@ -54,18 +60,31 @@ public class JourneyService implements GlobalVariable {
         return restTemplate.getForObject(url, Object.class);
     }
 
-    private Object getPathDetailRedis(double oriLon, double oriLat, double destLon, double destLat, String mode) {
-        String key = oriLon + ":" + oriLat + ":" + destLon + ":" + destLat;
-        String pathMode = mode == WALK_MODE ? PATH_DETAIL_WALK_KEY : PATH_DETAIL_DRIVE_KEY;
-        Object pathDetail = redisTemplate.opsForHash().get(pathMode, key);
+    private Object getPathDetailWalkRedis(double oriLon, double oriLat, double destLon, double destLat) {
+        String key = keyGenerateCoordinate(oriLon, oriLat, destLon, destLat);
+        Object pathDetail = redisTemplate.opsForHash().get(REDIS_PATH_DETAIL_WALK_KEY, key);
         if (pathDetail == null) {
-            if (mode == WALK_MODE) {
-                pathDetail = getPathWalk(oriLon, oriLat, destLon, destLat);
-            }
-            else {
-                pathDetail = getPathDrive(oriLon, oriLat, destLon, destLat);
-            }
-            redisTemplate.opsForHash().put(pathMode,
+            pathDetail = getPathWalk(oriLon, oriLat, destLon, destLat);
+            redisTemplate.opsForHash().put(REDIS_PATH_DETAIL_WALK_KEY,
+                    key,
+                    pathDetail);
+        }
+        return pathDetail;
+    }
+
+    private Object getPathDetailDriveRedis(double oriLon, double oriLat, double destLon, double destLat,
+                                           String tripId, String oriStopId, int oriStopSequence,
+                                           String desStopId, int desStopSequence) {
+        String key = keyGenerateCoordinate(oriLon, oriLat, destLon, destLat);
+        Object pathDetail = redisTemplate.opsForHash().get(REDIS_PATH_DETAIL_DRIVE_KEY, key);
+        if (pathDetail == null) {
+            pathDetail = journeyRepository.getShapeBetweenStop(
+                    tripId,
+                    oriStopId,
+                    oriStopSequence,
+                    desStopId,
+                    desStopSequence);
+            redisTemplate.opsForHash().put(REDIS_PATH_DETAIL_DRIVE_KEY,
                     key,
                     pathDetail);
         }
@@ -79,36 +98,71 @@ public class JourneyService implements GlobalVariable {
         List<TripPlanners> tripPlanners;
         Journey journey;
         Journey prevJourney;
-        TripDetail tripDetail;
-        String prevMode;
-        Object pathDetail;
+        TripDetail tripDetail = new TripDetail();
+        List<Trips> trips;
+        ZonedDateTime expectedArrivalTime = null;
+        ZonedDateTime aimedDepartureTime = null;
+        ZonedDateTime aimedArrivalTime = null;
         for (Integer key : resultList.keySet()) {
             tripPlanners = new ArrayList<>();
             journey = journeyList.get(key);
-            pathDetail = null;
 
             // Check if destination location not same as last stop in journey
             double distance = GlobalHelper.computeGreatCircleDistance(journey.getStopLat(), journey.getStopLon(), destLat, destLon);
             if (distance != 0) {
                 // Add destination stop in trip to mapping class
+                expectedArrivalTime = journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime().plusSeconds((long) (distance/NORMAL_WALKING_SPEED)) :
+                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()).plusSeconds((long) (distance/NORMAL_WALKING_SPEED));
+                aimedDepartureTime = timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime());
+                aimedArrivalTime = timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime());
+                tripDetail = new TripDetail(
+                        journey.getOperatorRef(),
+                        journey.getRouteRef(),
+                        journey.getRouteName(),
+                        journey.getDirectionRef(),
+                         journey.getTripId(),
+                        journey.getTripName(),
+                        journey.getStopId(),
+                        journey.getStopSequence(),
+                        journey.getWheelchairBoarding(),
+                        aimedArrivalTime,
+                        aimedDepartureTime
+                );
+                trips = new ArrayList<>();
+                trips.add(new Trips(
+                        journey.getStopName(),
+                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
+                                aimedArrivalTime,
+                        journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime() :
+                                aimedDepartureTime,
+                        tripDetail
+                ));
+                trips.add(new Trips(
+                        destinationName,
+                        expectedArrivalTime,
+                        null,
+                        null
+                ));
+                // Add to last trips
                 tripPlanners.add(0,
                         new TripPlanners(
-                                null,
+                                MODE.get(WALK_MODE),
+                                journey.getStopName(),
                                 destinationName,
-                                journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime().plusSeconds((long) (distance/NORMAL_WALKING_SPEED)) :
-                                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()).plusSeconds((long) (distance/NORMAL_WALKING_SPEED)),
-                                null,
-                                null,
-                                null
+                                journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime() :
+                                        aimedDepartureTime,
+                                expectedArrivalTime,
+                                getPathDetailWalkRedis(journey.getStopLon(), journey.getStopLat(), destLon, destLat),
+                                trips
                     )
                 );
-
-                journey.setMode(WALK_MODE);
-                // Get path walk
-                pathDetail = getPathDetailRedis(journey.getStopLon(), journey.getStopLat(), destLon, destLat, WALK_MODE);
             }
 
+            trips = new ArrayList<>();
+            Journey tempJourney = journey;
             while (journey != null) {
+                aimedDepartureTime = timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime());
+                aimedArrivalTime = timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime());
                 tripDetail = new TripDetail(
                         journey.getOperatorRef(),
                         journey.getRouteRef(),
@@ -119,38 +173,109 @@ public class JourneyService implements GlobalVariable {
                         journey.getStopId(),
                         journey.getStopSequence(),
                         journey.getWheelchairBoarding(),
-                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
-                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime())
+                        aimedArrivalTime,
+                        aimedDepartureTime
                 );
 
-                tripPlanners.add(0,
-                        new TripPlanners(
-                                MODE.get(journey.getMode()),
+                trips.add(0, new Trips(
+                        journey.getStopName(),
+                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
+                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
+                        journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime() :
+                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()),
+                        tripDetail
+                ));
+
+                // If prev stop have different trip with current stop
+                prevJourney = journey.getPrevKey() != null ? journeyList.get(journey.getPrevKey()) : null;
+                if (journey.getTripId() != prevJourney.getTripId()) {
+                    tripPlanners.add(0,
+                            new TripPlanners(
+                                    MODE.get(journey.getMode()),
+                                    journey.getStopName(),
+                                    tempJourney.getStopName(),
+                                    journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime() :
+                                            timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()),
+                                    tempJourney.getExpectedArrivalTime() != null ? tempJourney.getExpectedArrivalTime() :
+                                            timeService.concatDateDur(dateTime.toLocalDate(), tempJourney.getAimedArrivalTime()),
+                                    getPathDetailDriveRedis(journey.getStopLon(), journey.getStopLat(), tempJourney.getStopLon(), tempJourney.getStopLat(),
+                                            journey.getTripId(), journey.getStopId(), journey.getStopSequence(),
+                                            tempJourney.getStopId(), tempJourney.getStopSequence()),
+                                    trips
+                            )
+                    );
+
+                    // If the stop is the first stop of journey
+                    if (prevJourney == null) {
+                        break;
+                    }
+
+                    // Do check if current and previous key reach by walk then add path walk and detect transfer without walk
+                    // Detect transfer with walk
+                    if (journey.getPrevMode() == WALK_MODE) {
+                        // Trip details for previous stop
+                        trips = new ArrayList<>();
+                        trips.add(new Trips(
+                                prevJourney.getStopName(),
+                                prevJourney.getExpectedArrivalTime() != null ? prevJourney.getExpectedArrivalTime() :
+                                        timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedArrivalTime()),
+                                prevJourney.getExpectedDepartureTime() != null ? prevJourney.getExpectedDepartureTime() :
+                                        timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedDepartureTime()),
+                                new TripDetail(
+                                        prevJourney.getOperatorRef(),
+                                        prevJourney.getRouteRef(),
+                                        prevJourney.getRouteName(),
+                                        prevJourney.getDirectionRef(),
+                                        prevJourney.getTripId(),
+                                        prevJourney.getTripName(),
+                                        prevJourney.getStopId(),
+                                        prevJourney.getStopSequence(),
+                                        prevJourney.getWheelchairBoarding(),
+                                        timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedArrivalTime()),
+                                        timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedDepartureTime())
+                                )
+                        ));
+                        trips.add(new Trips(
                                 journey.getStopName(),
                                 journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
                                         timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
                                 journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime() :
                                         timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()),
-                                pathDetail,
                                 tripDetail
-                        )
-                );
+                        ));
+                        // Get path walk in redis if exists and add to trip planners
+                        tripPlanners.add(0,
+                                new TripPlanners(
+                                        MODE.get(WALK_MODE),
+                                        prevJourney.getStopName(),
+                                        journey.getStopName(),
+                                        prevJourney.getExpectedDepartureTime() != null ? prevJourney.getExpectedDepartureTime() :
+                                                timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedDepartureTime()),
+                                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
+                                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
+                                        getPathDetailWalkRedis(prevJourney.getStopLon(), prevJourney.getStopLat(), journey.getStopLon(), journey.getStopLat()),
+                                        trips
+                                )
+                        );
+                    } else { // Detect transfer without walk
+                        tripPlanners.add(0,
+                                new TripPlanners(
+                                        MODE.get(STAY_MODE),
+                                        prevJourney.getStopName(),
+                                        journey.getStopName(),
+                                        prevJourney.getExpectedDepartureTime() != null ? prevJourney.getExpectedDepartureTime() :
+                                                timeService.concatDateDur(dateTime.toLocalDate(), prevJourney.getAimedDepartureTime()),
+                                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
+                                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
+                                        null,
+                                        null
+                                )
+                        );
+                    }
 
-                // If the stop is the first stop of journey
-                if (journey.getPrevKey() == null)
-                    break;
-
-                // Do check if current and previous key reach by walk then add path walk
-                // detect transfer without walk
-                prevJourney = journeyList.get(journey.getPrevKey());
-                prevMode = journey.getPrevMode();
-                if (prevMode == WALK_MODE) {
-                    prevJourney.setMode(prevMode);
-                    // Get path walk in redis if exists
-                    pathDetail = getPathDetailRedis(prevJourney.getStopLon(), prevJourney.getStopLat(), journey.getStopLon(), journey.getStopLat(), WALK_MODE);
-                } else {
-                    // Check path drive in redis if exists
-                    pathDetail = getPathDetailRedis(prevJourney.getStopLon(), prevJourney.getStopLat(), journey.getStopLon(), journey.getStopLat(), DRIVE_MODE);
+                    // Set last stop in journey as temp journey
+                    trips = new ArrayList<>();
+                    tempJourney = prevJourney;
                 }
                 journey = prevJourney;
             }
@@ -159,15 +284,33 @@ public class JourneyService implements GlobalVariable {
             distance = GlobalHelper.computeGreatCircleDistance(oriLat, oriLon, journey.getStopLat(), journey.getStopLon());
             if (distance != 0) {
                 // Add source stop in trip to mapping class
+                trips = new ArrayList<>();
+                trips.add(new Trips(
+                        originName,
+                        null,
+                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime().minusSeconds((long) (distance/NORMAL_WALKING_SPEED)) :
+                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()).minusSeconds((long) (distance/NORMAL_WALKING_SPEED)),
+                        null
+                ));
+                trips.add(new Trips(
+                        journey.getStopName(),
+                        journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
+                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
+                        journey.getExpectedDepartureTime() != null ? journey.getExpectedDepartureTime() :
+                                timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedDepartureTime()),
+                        tripDetail
+                ));
                 tripPlanners.add(0,
                         new TripPlanners(
                                 MODE.get(WALK_MODE),
                                 originName,
-                                null,
+                                journey.getStopName(),
                                 journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime().minusSeconds((long) (distance/NORMAL_WALKING_SPEED)) :
                                         timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()).minusSeconds((long) (distance/NORMAL_WALKING_SPEED)),
+                                journey.getExpectedArrivalTime() != null ? journey.getExpectedArrivalTime() :
+                                        timeService.concatDateDur(dateTime.toLocalDate(), journey.getAimedArrivalTime()),
                                 getPathWalk(oriLon, oriLat, journey.getStopLon(), journey.getStopLat()),
-                                null
+                                trips
                         )
                 );
             }
@@ -363,22 +506,29 @@ public class JourneyService implements GlobalVariable {
         long distance = (long) GlobalHelper.computeGreatCircleDistance(originLat, originLong, destinationLat, destinationLong);
         if (distance <= MAX_WALK_DISTANCE) {
             // Set TripPlannerDelivery
+            List<Trips> trips = new ArrayList<>();
+            trips.add(new Trips(
+                    originName,
+                    null,
+                    timeService.localDateTimeToZonedDateTime(dateTime),
+                    null
+            ));
+            trips.add(new Trips(
+                    destinationName,
+                    timeService.localDateTimeToZonedDateTime(dateTime.plusSeconds((long) (distance/NORMAL_WALKING_SPEED))),
+                    null,
+                    null
+            ));
+
             List<TripPlanners> tripPlanners = new ArrayList<>();
             tripPlanners.add(new TripPlanners(
                     MODE.get(WALK_MODE),
                     originName,
-                    null,
-                    timeService.localDateTimeToZonedDateTime(dateTime),
-                    getPathWalk(originLong, originLat, destinationLong, destinationLat),
-                    null
-            ));
-            tripPlanners.add(new TripPlanners(
-                    null,
                     destinationName,
+                    timeService.localDateTimeToZonedDateTime(dateTime),
                     timeService.localDateTimeToZonedDateTime(dateTime.plusSeconds((long) (distance/NORMAL_WALKING_SPEED))),
-                    null,
-                    null,
-                    null
+                    getPathWalk(originLong, originLat, destinationLong, destinationLat),
+                    trips
             ));
 
             TripPlannerDelivery tripPlannerDelivery = new TripPlannerDelivery(tripPlanners);
@@ -464,5 +614,32 @@ public class JourneyService implements GlobalVariable {
         reconstructJourney(sortHashMapByValue(resultList), dateTime, originName, destinationName,
                 originLat, originLong, destinationLat, destinationLong, serviceDelivery);
         return new Gtfs(null, timeService.localDateTimeZone(), serviceDelivery);
+    }
+
+    public void initialPathDrive() {
+        List<StopTimeLocationDto> stopTimeLocation = journeyRepository.getStopTimeWithLocation();
+        for (int i = 0; i + 1 < stopTimeLocation.size(); i++) {
+            StopTimeLocationDto origin = stopTimeLocation.get(i);
+            StopTimeLocationDto destination = stopTimeLocation.get(i + 1);
+
+            // Add or update path drive to redis using API
+//            if (origin.getTripId().equals(destination.getTripId())) {
+//                redisTemplate.opsForHash().put(REDIS_PATH_DETAIL_DRIVE_KEY,
+//                        keyGenerateCoordinate(origin.getStopLon(), origin.getStopLat(), destination.getStopLon(), destination.getStopLat()),
+//                        getPathDrive(origin.getStopLon(), origin.getStopLat(), destination.getStopLon(), destination.getStopLat()));
+//            }
+
+            // Add or update path drive to redis using gtfs data
+            if (origin.getTripId().equals(destination.getTripId())) {
+                redisTemplate.opsForHash().put(REDIS_PATH_DETAIL_DRIVE_KEY,
+                        keyGenerateCoordinate(origin.getStopLon(), origin.getStopLat(), destination.getStopLon(), destination.getStopLat()),
+                        journeyRepository.getShapeBetweenStop(
+                                origin.getTripId(),
+                                origin.getStopId(),
+                                origin.getStopSequence(),
+                                destination.getStopId(),
+                                destination.getStopSequence()));
+            }
+        }
     }
 }

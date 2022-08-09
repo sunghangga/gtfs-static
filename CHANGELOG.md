@@ -6,7 +6,7 @@ All notable changes to this application will be documented in this file.
 
 - This application used for import GTFS data to the database and provide API.
 
-## [2.1.1] - 2022-04-18
+## [2.1.2] - 2022-08-01
 
 #### Added
 

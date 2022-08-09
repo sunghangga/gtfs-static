@@ -46,7 +46,7 @@ public class PatternIdService {
         int dataCount = 0;
         try (BufferedReader fileReader = new BufferedReader(new FileReader(path));
              CSVParser csvParser = new CSVParser(fileReader,
-                     CSVFormat.DEFAULT.withHeader(Header.class))) {
+                     CSVFormat.DEFAULT.withHeader(Header.class).withSkipHeaderRecord().withTrim())) {
 
             // Insert new data
             for (CSVRecord csvRecord : csvParser) {

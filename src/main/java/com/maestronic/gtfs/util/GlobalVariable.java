@@ -74,6 +74,7 @@ public interface GlobalVariable {
     int MAX_WALK_DISTANCE = 500;
     int DEFAULT_LIMIT_RESULT_TRIP_PLANNER = 5;
     String WALK_MODE = "walk";
+    String STAY_MODE = "stay";
     String DRIVE_MODE = "drive";
     Map<String, String> MODE = new HashMap<String, String>() {{
         put("walk", "Foot");
@@ -92,6 +93,6 @@ public interface GlobalVariable {
     String DEPARTURE_TRIP = "departure";
 
     // Redis variable
-    String PATH_DETAIL_WALK_KEY = "path_detail_walk";
-    String PATH_DETAIL_DRIVE_KEY = "path_detail_drive";
+    String REDIS_PATH_DETAIL_WALK_KEY = "path_detail_walk";
+    String REDIS_PATH_DETAIL_DRIVE_KEY = "path_detail_drive";
 }

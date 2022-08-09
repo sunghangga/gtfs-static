@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -12,9 +13,10 @@ import java.time.ZonedDateTime;
 public class TripPlanners {
 
     private String mode;
-    private String stopPointNames;
-    private ZonedDateTime expectedArrivalTime;
-    private ZonedDateTime expectedDepartureTime;
+    private String originPointNames;
+    private String destinationPointNames;
+    private ZonedDateTime tripDepartureTime; // First time of trip
+    private ZonedDateTime tripArrivalTime; // Last time of trip
     private Object pathDetail;
-    private TripDetail tripDetail;
+    private List<Trips> trips;
 }

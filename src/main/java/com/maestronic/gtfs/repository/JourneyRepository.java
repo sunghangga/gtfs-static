@@ -3,7 +3,8 @@ package com.maestronic.gtfs.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.maestronic.gtfs.entity.Journey;
+import com.maestronic.gtfs.dto.custom.ShapeBetweenStopDto;
+import com.maestronic.gtfs.dto.custom.StopTimeLocationDto;
 import com.maestronic.gtfs.entity.JourneyParam;
 import com.maestronic.gtfs.util.GlobalHelper;
 import com.maestronic.gtfs.util.GlobalVariable;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.*;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -215,7 +215,7 @@ public class JourneyRepository {
 
         // Get trip location
         String queryString = "SELECT * FROM (SELECT DISTINCT ON (res.trip_id) * FROM (SELECT DISTINCT ON (s.stop_id) " +
-                "temp_json.prev_key source_key, t.trip_id, st.stop_id, s.stop_name, s.stop_lat, s.stop_lon, r.route_type, st.stop_sequence, \n" +
+                "temp_json.key source_key, t.trip_id, st.stop_id, s.stop_name, s.stop_lat, s.stop_lon, r.route_type, st.stop_sequence, \n" +
                 "r.agency_id, r.route_id, r.route_long_name, t.direction_id, t.trip_headsign, t.wheelchair_accessible, \n" +
                 "cast(date_part('epoch', st.arrival_time) * INTERVAL '1 second' as varchar) as aimed_arrival_time, \n" +
                 "cast(date_part('epoch', st.departure_time) * INTERVAL '1 second' as varchar) as aimed_departure_time, \n" +
@@ -238,7 +238,7 @@ public class JourneyRepository {
                 "       ) c ON c.service_id = t.service_id \n" +
                 "left join json_to_recordset('" + jsonStr + "') as trip_json(trip_id varchar) \n" +
                         "on t.trip_id = trip_json.trip_id \n" +
-                "left join json_to_recordset('" + jsonStr + "') as temp_json(prev_key int, trip_id varchar, stop_id varchar, arrival_time varchar) \n" +
+                "left join json_to_recordset('" + jsonStr + "') as temp_json(key int, trip_id varchar, stop_id varchar, arrival_time varchar) \n" +
                         "on st.stop_id = temp_json.stop_id \n" +
                 "INNER JOIN routes r ON t.route_id = r.route_id \n" +
                 "left join trip_updates tu on tu.trip_id = t.trip_id \n" +
@@ -318,6 +318,51 @@ public class JourneyRepository {
         // Execute query builder
         Query query = em.createNativeQuery(queryString, Tuple.class);
         List<Tuple> dataList = query.getResultList();
+
+        em.close();
+
+        return dataList;
+    }
+
+    public List<StopTimeLocationDto> getStopTimeWithLocation() {
+
+        EntityManager em = emf.createEntityManager();
+
+        // Get trip location
+        String queryString = "select new com.maestronic.gtfs.dto.custom.StopTimeLocationDto(st.tripId, s.stopId, s.stopLat, s.stopLon, st.stopSequence)\n" +
+                "from StopTime st\n" +
+                "inner join Stop s on st.stopId = s.stopId \n" +
+                "order by st.tripId, st.stopSequence asc";
+
+        // Execute query builder
+        Query query = em.createQuery(queryString, StopTimeLocationDto.class);
+        List<StopTimeLocationDto> dataList = query.getResultList();
+
+        em.close();
+
+        return dataList;
+    }
+
+    public List<ShapeBetweenStopDto> getShapeBetweenStop(String tripId, String oriStopId, int oriStopSequence, String desStopId, int desStopSequence) {
+
+        EntityManager em = emf.createEntityManager();
+
+        // Get trip location
+        String queryString = "select new com.maestronic.gtfs.dto.custom.ShapeBetweenStopDto(s.shapePtLat, s.shapePtLon)\n" +
+                "from Trip t \n" +
+                "inner join Shape s on t.shapeId = s.shapeId\n" +
+                "where t.tripId = '" + tripId + "'\n" +
+                "and s.shapeDistTraveled >= (select coalesce(shapeDistTraveled, 0) from StopTime " +
+                "   where tripId = '" + tripId + "' " +
+                "   and stopId = '" + oriStopId + "' and stopSequence = " + oriStopSequence + ")\n" +
+                "and s.shapeDistTraveled <= (select coalesce(shapeDistTraveled, 0) from StopTime " +
+                "   where tripId = '" + tripId + "' " +
+                "   and stopId = '" + desStopId + "' and stopSequence = " + desStopSequence + ")\n" +
+                "order by s.shapePtSequence asc";
+
+        // Execute query builder
+        Query query = em.createQuery(queryString, ShapeBetweenStopDto.class);
+        List<ShapeBetweenStopDto> dataList = query.getResultList();
 
         em.close();
 

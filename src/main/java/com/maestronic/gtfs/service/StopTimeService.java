@@ -23,8 +23,6 @@ public class StopTimeService {
     @PersistenceContext
     private EntityManager entityManager;
     private Session session;
-    @Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
-    private int batchSize;
     @Autowired
     private StopTimeRepository stopTimeRepository;
     @Autowired
@@ -33,13 +31,6 @@ public class StopTimeService {
     private Session getSession() {
         if (session == null) session = entityManager.unwrap(Session.class);
         return session;
-    }
-
-    private void checkBatchSize(int savedCount) {
-        if (savedCount % batchSize == 0) {
-            session.flush();
-            session.clear();
-        }
     }
 
     public Integer parseSaveData(String path) {
@@ -73,7 +64,8 @@ public class StopTimeService {
                 session.saveOrUpdate(stopTime);
                 // compare batch saved count
                 dataCount++;
-                checkBatchSize(dataCount);
+                session.flush();
+                session.clear();
             }
 
             session.flush();

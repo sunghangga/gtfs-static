@@ -42,6 +42,8 @@ public class ImportService implements GlobalVariable {
     @Autowired
     private FileService fileServiceHelper;
     @Autowired
+    private JourneyService journeyService;
+    @Autowired
     private TimeService timeService;
     @Value("${file.upload-dir-gtfs}")
     private String destDirGtfs;
@@ -316,13 +318,13 @@ public class ImportService implements GlobalVariable {
                      CSVParser csvParser = new CSVParser(fileReader,
                              CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim())) {
 
-                    Iterable<CSVRecord> csvRecords = csvParser.getRecords();
+                    CSVRecord csvRecord = csvParser.getRecords().get(0);
                     // Get latest GTFS data from database
                     FeedInfo feedInfo = feedInfoRepository.findTop1ByOrderByFeedVersionDesc();
-                    for (CSVRecord csvRecord : csvRecords) {
+                    if (csvRecord != null) {
                         // Check if no feed in database
                         if (feedInfo == null) {
-                            // Check if feed date is valid
+                            // Check if current date more than feed start date
                             if (timeService.localDateZoneGTFS() >= Integer.parseInt(csvRecord.get("feed_start_date"))) {
                                 logMessage = "Check validation GTFS data is complete. GTFS data is valid, ready to import!";
                                 Logger.info(logMessage);
@@ -354,7 +356,7 @@ public class ImportService implements GlobalVariable {
                             }
                         }
 
-                        // Special case for VIA GTFS data
+                        // Special case for VIA and Translink GTFS data
                         String[] feedVersionCsv = csvRecord.get("feed_version").split("_");
                         String[] feedVersionDb = feedInfo.getFeedVersion().split("_");
                         // Check if version import is latest and start_date is valid
@@ -375,6 +377,7 @@ public class ImportService implements GlobalVariable {
                             return true;
                         }
                     }
+
                     logMessage = "Validation GTFS data is complete. GTFS date or version is not valid! Please import valid GTFS.";
                     Logger.error(logMessage);
                     importInit.setUpdatedAt(LocalDateTime.now());
@@ -427,7 +430,15 @@ public class ImportService implements GlobalVariable {
         return false;
     }
 
-    public void importGtfsData(Import importInit, MultipartFile file) {
+    public void importProcessGtfs(Import importInit, MultipartFile file) {
+        // Import gtfs
+        importGtfsData(importInit, file);
+
+        // Initial path location on redis
+        journeyService.initialPathDrive();
+    }
+
+    private void importGtfsData(Import importInit, MultipartFile file) {
 
         Logger.info("Import process is started.");
         Logger.info("ID = " + importInit.getId() + ", Task name = " + importInit.getTaskName());

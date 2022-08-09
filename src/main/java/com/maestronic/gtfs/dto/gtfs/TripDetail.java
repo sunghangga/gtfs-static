@@ -17,12 +17,9 @@ public class TripDetail {
     private String directionRef;
     private String tripRef;
     private String tripName;
-//    private Vehicle vehicle;
     private String stopPointRef;
     private Integer stopSequence;
     private Integer wheelchairBoarding;
     private ZonedDateTime aimedArrivalTime;
-//    private Integer arrivalDelay;
     private ZonedDateTime aimedDepartureTime;
-//    private Integer departureDelay;
 }
