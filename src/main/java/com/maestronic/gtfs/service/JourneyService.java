@@ -4,6 +4,7 @@ import com.maestronic.gtfs.dto.custom.StopTimeLocationDto;
 import com.maestronic.gtfs.entity.Journey;
 import com.maestronic.gtfs.dto.gtfs.*;
 import com.maestronic.gtfs.entity.JourneyParam;
+import com.maestronic.gtfs.repository.FareRepository;
 import com.maestronic.gtfs.repository.JourneyRepository;
 import com.maestronic.gtfs.util.GlobalHelper;
 import com.maestronic.gtfs.util.GlobalVariable;
@@ -22,6 +23,8 @@ public class JourneyService implements GlobalVariable {
 
     @Autowired
     private JourneyRepository journeyRepository;
+    @Autowired
+    private FareRepository fareRepository;
     @Autowired
     private TimeService timeService;
     @Autowired
@@ -161,6 +164,7 @@ public class JourneyService implements GlobalVariable {
                 );
             }
 
+            List<String> routeList = new ArrayList<>();
             trips = new ArrayList<>();
             Journey tempJourney = journey;
             while (journey != null) {
@@ -207,6 +211,11 @@ public class JourneyService implements GlobalVariable {
                                     trips
                             )
                     );
+
+                    // Add to route list to get fare
+                    if (!routeList.contains(journey.getRouteRef())) {
+                        routeList.add("'" + journey.getRouteRef() + "'");
+                    }
 
                     // If the stop is the first stop of journey
                     if (prevJourney == null) {
@@ -325,8 +334,13 @@ public class JourneyService implements GlobalVariable {
                 );
             }
 
+            // Get fare data based on route
+            Tuple fare = fareRepository.fareByRouteGroup(routeList).get(0);
+
             // Add trip solution
-            TripPlannerDelivery tripPlannerDelivery = new TripPlannerDelivery(tripPlanners);
+            TripPlannerDelivery tripPlannerDelivery = new TripPlannerDelivery(
+                    Double.parseDouble(fare.get("total_price").toString()),
+                    fare.get("currency_type").toString(), tripPlanners);
             serviceDelivery.getTripPlannerDeliveries().add(tripPlannerDelivery);
         }
     }
@@ -542,7 +556,7 @@ public class JourneyService implements GlobalVariable {
                     trips
             ));
 
-            TripPlannerDelivery tripPlannerDelivery = new TripPlannerDelivery(tripPlanners);
+            TripPlannerDelivery tripPlannerDelivery = new TripPlannerDelivery(0, null, tripPlanners);
 
             // Set first trip plan
             serviceDelivery.getTripPlannerDeliveries().add(tripPlannerDelivery);

@@ -72,4 +72,20 @@ public class FareRepository {
 
         return result;
     }
+
+    public List<Tuple> fareByRouteGroup(List<String> routeIds) {
+        EntityManager em = emf.createEntityManager();
+        String queryString = "select sum(fa.price) total_price, fa.currency_type\n" +
+                "from fare_rules fr\n" +
+                "left join fare_attributes fa on fr.fare_id = fa.fare_id\n" +
+                "where route_id in (" + String.join(",", routeIds) + ")\n" +
+                "group by fa.currency_type";
+
+        // Execute query builder
+        Query query = em.createNativeQuery(queryString, Tuple.class);
+        List<Tuple> dataList = query.getResultList();
+        em.close();
+
+        return dataList;
+    }
 }
