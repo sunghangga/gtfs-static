@@ -335,12 +335,16 @@ public class JourneyService implements GlobalVariable {
             }
 
             // Get fare data based on route
-            Tuple fare = fareRepository.fareByRouteGroup(routeList).get(0);
+            List<Tuple> fares = fareRepository.fareByRouteGroup(routeList);
+            Tuple fare = null;
+            if (fares.size() > 0) {
+                fare = fares.get(0);
+            }
 
             // Add trip solution
             TripPlannerDelivery tripPlannerDelivery = new TripPlannerDelivery(
-                    Double.parseDouble(fare.get("total_price").toString()),
-                    fare.get("currency_type").toString(), tripPlanners);
+                    fare != null ? Double.parseDouble(fare.get("total_price").toString()) : 0,
+                    fare != null ? fare.get("currency_type").toString() : null, tripPlanners);
             serviceDelivery.getTripPlannerDeliveries().add(tripPlannerDelivery);
         }
     }
@@ -639,32 +643,5 @@ public class JourneyService implements GlobalVariable {
         reconstructJourney(sortHashMapByValue(resultList), dateTime, originName, destinationName,
                 originLat, originLong, destinationLat, destinationLong, serviceDelivery);
         return new Gtfs(null, timeService.localDateTimeZone(), serviceDelivery);
-    }
-
-    public void initialPathDrive() {
-        List<StopTimeLocationDto> stopTimeLocation = journeyRepository.getStopTimeWithLocation();
-        for (int i = 0; i + 1 < stopTimeLocation.size(); i++) {
-            StopTimeLocationDto origin = stopTimeLocation.get(i);
-            StopTimeLocationDto destination = stopTimeLocation.get(i + 1);
-
-            // Add or update path drive to redis using API
-//            if (origin.getTripId().equals(destination.getTripId())) {
-//                redisTemplate.opsForHash().put(REDIS_PATH_DETAIL_DRIVE_KEY,
-//                        keyGenerateCoordinate(origin.getStopLon(), origin.getStopLat(), destination.getStopLon(), destination.getStopLat()),
-//                        getPathDrive(origin.getStopLon(), origin.getStopLat(), destination.getStopLon(), destination.getStopLat()));
-//            }
-
-            // Add or update path drive to redis using gtfs data
-            if (origin.getTripId().equals(destination.getTripId())) {
-                redisTemplate.opsForHash().put(REDIS_PATH_DETAIL_DRIVE_KEY,
-                        keyGenerateCoordinate(origin.getStopLon(), origin.getStopLat(), destination.getStopLon(), destination.getStopLat()),
-                        journeyRepository.getShapeBetweenStop(
-                                origin.getTripId(),
-                                origin.getStopId(),
-                                origin.getStopSequence(),
-                                destination.getStopId(),
-                                destination.getStopSequence()));
-            }
-        }
     }
 }

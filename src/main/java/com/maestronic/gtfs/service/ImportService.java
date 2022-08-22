@@ -42,8 +42,6 @@ public class ImportService implements GlobalVariable {
     @Autowired
     private FileService fileServiceHelper;
     @Autowired
-    private JourneyService journeyService;
-    @Autowired
     private TimeService timeService;
     @Value("${file.upload-dir-gtfs}")
     private String destDirGtfs;
@@ -433,9 +431,6 @@ public class ImportService implements GlobalVariable {
     public void importProcessGtfs(Import importInit, MultipartFile file) {
         // Import gtfs
         importGtfsData(importInit, file);
-
-        // Initial path location on redis
-        journeyService.initialPathDrive();
     }
 
     private void importGtfsData(Import importInit, MultipartFile file) {
