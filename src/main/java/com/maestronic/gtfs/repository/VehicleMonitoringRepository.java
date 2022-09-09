@@ -14,7 +14,7 @@ import java.util.List;
 public interface VehicleMonitoringRepository extends JpaRepository<VehicleMonitoring, VehicleMonitoringCompositeId> {
 
     @Modifying
-    @Query(value = "SELECT * FROM vehicle_monitoring(:agency_id,:timestamp)", nativeQuery = true)
+    @Query(value = "SELECT * FROM vehicle_monitoring(:agency_id, :timestamp)", nativeQuery = true)
     List<VehicleMonitoring> findVehicleMonitoringByAgency(@Param("agency_id") String agency_id,
                                                           @Param("timestamp") long timestamp);
 

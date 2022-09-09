@@ -54,6 +54,11 @@ public class TimeService {
         return Integer.parseInt(dateTime.atZone(ZoneId.of(timezone)).format(dateFormat));
     }
 
+    public Integer localDateZoneGTFSByDate(LocalDate date) {
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return Integer.parseInt(date.format(dateFormat));
+    }
+
     public String localTimeZoneGTFSByDateTime(LocalDateTime dateTime) {
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
         return (String) dateTime.atZone(ZoneId.of(timezone)).format(dateFormat);
@@ -122,6 +127,11 @@ public class TimeService {
     public LocalDateTime strToLocalDateTime(String strTime) {
         DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return LocalDateTime.parse(strTime, dateTimeFormat);
+    }
+
+    public LocalDate strToLocalDate(String strTime) {
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return LocalDate.parse(strTime, dateFormat);
     }
 
     public long concatDateTime(String strTime) {

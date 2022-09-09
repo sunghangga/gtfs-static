@@ -1,9 +1,9 @@
 package com.maestronic.gtfs.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.maestronic.gtfs.service.VehicleConnectionService;
+import com.maestronic.gtfs.dto.custom.StopDto;
+import com.maestronic.gtfs.service.StopService;
 import com.maestronic.gtfs.util.ResponseMessage;
-import com.maestronic.gtfs.validation.VehicleMonitorDummyValidation;
+import com.maestronic.gtfs.validation.PageValidation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,35 +15,49 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @CrossOrigin
 @RestController
-public class VehicleConnectionController {
+public class StopController {
 
     @Autowired
-    private VehicleConnectionService vehicleConnectionService;
+    private StopService stopService;
     private HttpHeaders headers;
 
-    @GetMapping(path = "api/gtfs/vehicle-monitoring-connection", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Object> getVehicleMonitoringConnection(@RequestParam(required = true) String agency_id,
-                                                                 @RequestParam(required = true) String vehicle_id,
-                                                                 @RequestParam(required = false, defaultValue = "0") Long approx) {
+    @GetMapping(path = "api/gtfs/stops", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getStops(@Validated PageValidation pageValidation,
+                                           BindingResult bindingResult) {
 
+        if (bindingResult.hasErrors()) {
+            return new ResponseEntity<>(
+                    ResponseMessage.exceptionErrorJson(
+                            HttpStatus.BAD_REQUEST.value(),
+                            bindingResult
+                                    .getFieldErrors()
+                                    .stream()
+                                    .map(f -> (f.getField() + ": " + f.getDefaultMessage()))
+                                    .collect(Collectors.toList())
+                    ),
+                    headers,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        // Set headers
         headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // Check if required parameter is empty string or null
-        if (agency_id.isEmpty() || agency_id == null || vehicle_id.isEmpty() || vehicle_id == null) {
-            throw new IllegalArgumentException();
-        }
-
         try {
-            String response = vehicleConnectionService.getVehicleMonitorConnection(agency_id, vehicle_id, approx);
+            List<StopDto> response = stopService.getStops(
+                    pageValidation.getPageNo() - 1,
+                    pageValidation.getPageSize(),
+                    pageValidation.getSortType().name());
 
             if (response == null) {
                 return new ResponseEntity<>(
@@ -61,7 +75,7 @@ public class VehicleConnectionController {
                     ResponseMessage.retrieveDataJson(
                             HttpStatus.OK.value(),
                             "Retrieved data successfully.",
-                            new ObjectMapper().readTree(response)
+                            response
                     ),
                     headers,
                     HttpStatus.OK
@@ -79,36 +93,16 @@ public class VehicleConnectionController {
         }
     }
 
-    @GetMapping(path = "api/gtfs/dummy/vehicle-monitoring-connection", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Object> getDummyVehicleMonitoringConnection(@Validated VehicleMonitorDummyValidation validation,
-                                                                      BindingResult bindingResult) {
+    @GetMapping(path = "api/gtfs/stop/{stopId}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getStops(@PathVariable @NotNull String stopId) {
 
+        // Set headers
         headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // Check if required parameter is empty string or null
-        if (bindingResult.hasErrors()) {
-            return new ResponseEntity<>(
-                    ResponseMessage.exceptionErrorJson(
-                            HttpStatus.BAD_REQUEST.value(),
-                            bindingResult
-                                    .getFieldErrors()
-                                    .stream()
-                                    .map(f -> (f.getField() + ": " + f.getDefaultMessage()))
-                                    .collect(Collectors.toList())
-                    ),
-                    headers,
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
         try {
-            String response = vehicleConnectionService.getDummyVehicleMonitorConnection(validation.getAgency_id(),
-                    validation.getDate(),
-                    validation.getStart_time(),
-                    validation.getEnd_time(),
-                    validation.getLimit());
+            StopDto response = stopService.getStopsByStopId(stopId);
 
             if (response == null) {
                 return new ResponseEntity<>(
@@ -126,7 +120,7 @@ public class VehicleConnectionController {
                     ResponseMessage.retrieveDataJson(
                             HttpStatus.OK.value(),
                             "Retrieved data successfully.",
-                            new ObjectMapper().readTree(response)
+                            response
                     ),
                     headers,
                     HttpStatus.OK

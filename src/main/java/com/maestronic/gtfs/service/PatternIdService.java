@@ -1,6 +1,7 @@
 package com.maestronic.gtfs.service;
 
 import com.maestronic.gtfs.entity.PatternId;
+import com.maestronic.gtfs.enumerate.PatternIdHeaderEnum;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.Logger;
 import org.apache.commons.csv.CSVFormat;
@@ -36,17 +37,13 @@ public class PatternIdService {
         }
     }
 
-    enum Header {
-        trip_id, pattern_id, pattern_name
-    }
-
     public Integer parseSaveData(String path) {
 
         getSession();
         int dataCount = 0;
         try (BufferedReader fileReader = new BufferedReader(new FileReader(path));
              CSVParser csvParser = new CSVParser(fileReader,
-                     CSVFormat.DEFAULT.withHeader(Header.class).withSkipHeaderRecord().withTrim())) {
+                     CSVFormat.DEFAULT.withHeader(PatternIdHeaderEnum.class).withSkipHeaderRecord().withTrim())) {
 
             // Insert new data
             for (CSVRecord csvRecord : csvParser) {

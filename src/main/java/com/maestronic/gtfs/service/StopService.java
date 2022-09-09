@@ -1,6 +1,8 @@
 package com.maestronic.gtfs.service;
 
+import com.maestronic.gtfs.dto.custom.StopDto;
 import com.maestronic.gtfs.entity.Stop;
+import com.maestronic.gtfs.enumerate.SortTypeEnum;
 import com.maestronic.gtfs.repository.StopRepository;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.Logger;
@@ -10,6 +12,10 @@ import org.apache.commons.csv.CSVRecord;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -86,5 +92,20 @@ public class StopService {
             String logMessage = "Fail to parse and save " + GlobalVariable.STOPS + " file. " + e.getMessage();
             throw new RuntimeException(logMessage);
         }
+    }
+
+    public List<StopDto> getStops(int pageNo, int pageSize, String sortType) {
+        Sort sort;
+        if (sortType.equals(SortTypeEnum.ASC.name())) {
+            sort = Sort.by("stopId").ascending();
+        } else {
+            sort = Sort.by("stopId").descending();
+        }
+        Pageable pageSort = PageRequest.of(pageNo, pageSize, sort);
+        return stopRepository.findAllStops(pageSort);
+    }
+
+    public StopDto getStopsByStopId(String stopId) {
+        return stopRepository.findStopsByStopId(stopId);
     }
 }
