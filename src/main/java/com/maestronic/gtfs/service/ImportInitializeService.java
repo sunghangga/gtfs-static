@@ -35,13 +35,15 @@ public class ImportInitializeService implements GlobalVariable {
                 releaseDate);
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_PREPARE,
                 IMPORT_DETAIL_PREPARE,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+
+        importInit.getImportDetail().add(importDetail);
 
         // Start import process GTFS
         if (fileType.equals(GTFS_FILE_TYPE)) {

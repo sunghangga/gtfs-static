@@ -1,8 +1,6 @@
 package com.maestronic.gtfs.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -13,7 +11,8 @@ import java.util.List;
 @Table(name = Import.TABLE_NAME)
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Setter
+@Getter
 public class Import {
 
     public static final String TABLE_NAME= "import";
@@ -21,7 +20,7 @@ public class Import {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private int id;
+    private Integer id;
 
     @Column(name = "task_name")
     private String taskName;

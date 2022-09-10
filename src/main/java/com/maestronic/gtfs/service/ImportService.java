@@ -10,6 +10,7 @@ import com.maestronic.gtfs.repository.ImportRepository;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.Logger;
 import nl.connekt.bison.chb.Export;
+import okhttp3.*;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -49,6 +50,8 @@ public class ImportService implements GlobalVariable {
     private String destDirChb;
     @Value("${file.upload-dir-psa}")
     private String destDirPsa;
+    @Value("${webhook.url}")
+    private String webhookUrl;
     private ImportComponent importComponent;
 
     public long countByStatusAndFileType(String status, String fileType) {
@@ -78,13 +81,14 @@ public class ImportService implements GlobalVariable {
         importInit.setUpdatedAt(LocalDateTime.now());
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_SAVE,
                 logMessage,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+        importInit.getImportDetail().add(importDetail);
 
         return bool;
     }
@@ -113,13 +117,14 @@ public class ImportService implements GlobalVariable {
         importInit.setUpdatedAt(LocalDateTime.now());
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_UNMARSHALL,
                 logMessage,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+        importInit.getImportDetail().add(importDetail);
 
         return export;
     }
@@ -146,13 +151,14 @@ public class ImportService implements GlobalVariable {
         importInit.setUpdatedAt(LocalDateTime.now());
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_SAVE,
                 logMessage,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+        importInit.getImportDetail().add(importDetail);
 
         return bool;
     }
@@ -181,13 +187,14 @@ public class ImportService implements GlobalVariable {
         importInit.setUpdatedAt(LocalDateTime.now());
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_UNMARSHALL,
                 logMessage,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+        importInit.getImportDetail().add(importDetail);
 
         return export;
     }
@@ -214,13 +221,14 @@ public class ImportService implements GlobalVariable {
         importInit.setUpdatedAt(LocalDateTime.now());
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_SAVE,
                 logMessage,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+        importInit.getImportDetail().add(importDetail);
 
         return bool;
     }
@@ -236,13 +244,14 @@ public class ImportService implements GlobalVariable {
         importInit.setUpdatedAt(LocalDateTime.now());
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_UPLOAD,
                 logMessage,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+        importInit.getImportDetail().add(importDetail);
 
         return result.get("data");
     }
@@ -258,13 +267,14 @@ public class ImportService implements GlobalVariable {
         importInit.setUpdatedAt(LocalDateTime.now());
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_EXTRACT,
                 logMessage,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+        importInit.getImportDetail().add(importDetail);
 
         return (ArrayList<String>) result.get("data");
     }
@@ -277,13 +287,14 @@ public class ImportService implements GlobalVariable {
         importInit.setUpdatedAt(LocalDateTime.now());
         importRepository.save(importInit);
         // Save import detail
-        importDetailRepository.save(new ImportDetail(
+        ImportDetail importDetail = new ImportDetail(
                 IMPORT_STATE_DELETE,
                 logMessage,
                 importInit,
                 LocalDateTime.now(),
-                LocalDateTime.now())
-        );
+                LocalDateTime.now());
+        importDetailRepository.save(importDetail);
+        importInit.getImportDetail().add(importDetail);
 
         java.io.File folder = new java.io.File(destDir);
         if (!folder.exists()) {
@@ -329,13 +340,14 @@ public class ImportService implements GlobalVariable {
                                 importInit.setUpdatedAt(LocalDateTime.now());
                                 importRepository.save(importInit);
                                 // Save import detail
-                                importDetailRepository.save(new ImportDetail(
+                                ImportDetail importDetail = new ImportDetail(
                                         IMPORT_STATE_VALIDATE,
                                         logMessage,
                                         importInit,
                                         LocalDateTime.now(),
-                                        LocalDateTime.now())
-                                );
+                                        LocalDateTime.now());
+                                importDetailRepository.save(importDetail);
+                                importInit.getImportDetail().add(importDetail);
                                 return true;
                             } else {
                                 logMessage = "Validation GTFS data is complete. GTFS date or version is not valid! Please import valid GTFS.";
@@ -343,13 +355,14 @@ public class ImportService implements GlobalVariable {
                                 importInit.setUpdatedAt(LocalDateTime.now());
                                 importRepository.save(importInit);
                                 // Save import detail
-                                importDetailRepository.save(new ImportDetail(
+                                ImportDetail importDetail = new ImportDetail(
                                         IMPORT_STATE_VALIDATE,
                                         logMessage,
                                         importInit,
                                         LocalDateTime.now(),
-                                        LocalDateTime.now())
-                                );
+                                        LocalDateTime.now());
+                                importDetailRepository.save(importDetail);
+                                importInit.getImportDetail().add(importDetail);
                                 return false;
                             }
                         }
@@ -365,13 +378,14 @@ public class ImportService implements GlobalVariable {
                             importInit.setUpdatedAt(LocalDateTime.now());
                             importRepository.save(importInit);
                             // Save import detail
-                            importDetailRepository.save(new ImportDetail(
+                            ImportDetail importDetail = new ImportDetail(
                                     IMPORT_STATE_VALIDATE,
                                     logMessage,
                                     importInit,
                                     LocalDateTime.now(),
-                                    LocalDateTime.now())
-                            );
+                                    LocalDateTime.now());
+                            importDetailRepository.save(importDetail);
+                            importInit.getImportDetail().add(importDetail);
                             return true;
                         }
                     }
@@ -381,13 +395,14 @@ public class ImportService implements GlobalVariable {
                     importInit.setUpdatedAt(LocalDateTime.now());
                     importRepository.save(importInit);
                     // Save import detail
-                    importDetailRepository.save(new ImportDetail(
+                    ImportDetail importDetail = new ImportDetail(
                             IMPORT_STATE_VALIDATE,
                             logMessage,
                             importInit,
                             LocalDateTime.now(),
-                            LocalDateTime.now())
-                    );
+                            LocalDateTime.now());
+                    importDetailRepository.save(importDetail);
+                    importInit.getImportDetail().add(importDetail);
                     return false;
                 } catch (Exception e) {
                     logMessage = "Fail to validate GTFS data. " + e.getMessage();
@@ -395,13 +410,14 @@ public class ImportService implements GlobalVariable {
                     importInit.setUpdatedAt(LocalDateTime.now());
                     importRepository.save(importInit);
                     // Save import detail
-                    importDetailRepository.save(new ImportDetail(
+                    ImportDetail importDetail = new ImportDetail(
                             IMPORT_STATE_VALIDATE,
                             logMessage,
                             importInit,
                             LocalDateTime.now(),
-                            LocalDateTime.now())
-                    );
+                            LocalDateTime.now());
+                    importDetailRepository.save(importDetail);
+                    importInit.getImportDetail().add(importDetail);
                     throw new RuntimeException(logMessage);
                 }
             }
@@ -415,13 +431,14 @@ public class ImportService implements GlobalVariable {
             importInit.setUpdatedAt(LocalDateTime.now());
             importRepository.save(importInit);
             // Save import detail
-            importDetailRepository.save(new ImportDetail(
+            ImportDetail importDetail = new ImportDetail(
                     IMPORT_STATE_VALIDATE,
                     logMessage,
                     importInit,
                     LocalDateTime.now(),
-                    LocalDateTime.now())
-            );
+                    LocalDateTime.now());
+            importDetailRepository.save(importDetail);
+            importInit.getImportDetail().add(importDetail);
             return true;
         }
 
@@ -431,6 +448,35 @@ public class ImportService implements GlobalVariable {
     public void importProcessGtfs(Import importInit, MultipartFile file) {
         // Import gtfs
         importGtfsData(importInit, file);
+        // Send report if import is done
+        sendReport(importInit);
+    }
+
+    private void sendReport(Import importInit) {
+
+        Response response = null;
+        try {
+            // Create request to import data
+            RequestBody requestBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("id", importInit.getId() == null ? "" : importInit.getId().toString())
+                    .addFormDataPart("taskName", importInit.getTaskName() == null ? "" : importInit.getTaskName())
+                    .addFormDataPart("fileName", importInit.getFileName() == null ? "" : importInit.getFileName())
+                    .addFormDataPart("fileType", importInit.getFileType() == null ? "" : importInit.getFileType())
+                    .addFormDataPart("status", importInit.getStatus() == null ? "" : importInit.getStatus())
+                    .addFormDataPart("createdAt", importInit.getCreatedAt() == null ? "" : importInit.getCreatedAt().toString())
+                    .addFormDataPart("updatedAt", importInit.getUpdatedAt() == null ? "" : importInit.getUpdatedAt().toString())
+                    .addFormDataPart("releaseDate", importInit.getReleaseDate() == null ? "" : importInit.getReleaseDate().toString())
+                    .addFormDataPart("importDetail", importInit.getImportDetail() == null ? "" : importInit.getImportDetail().toString())
+                    .build();
+            Request postRequest = new Request.Builder().url(webhookUrl).post(requestBody).build();
+            response = new OkHttpClient().newCall(postRequest).execute();
+        } catch (Exception e) {
+            String logMessage = "Error while send report: " + e.getMessage();
+            throw new RuntimeException(logMessage);
+        } finally {
+            if (response != null) response.close();
+        }
     }
 
     private void importGtfsData(Import importInit, MultipartFile file) {
