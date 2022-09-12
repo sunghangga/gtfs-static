@@ -79,4 +79,10 @@ public class VehicleMonitoring {
     private String tripScheduleRelationship;
     @Column(name = "stop_schedule_relationship")
     private String stopScheduleRelationship;
+    @Column(name = "bikes_allowed")
+    private Integer bikesAllowed;
+    @Column(name = "route_color")
+    private String routeColor;
+    @Column(name = "route_text_color")
+    private String routeTextColor;
 }

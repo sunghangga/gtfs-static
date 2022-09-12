@@ -87,10 +87,13 @@ public class VehicleConnectionService implements GlobalVariable {
                 MonitoredVehicleJourney monitoredVehicleJourney = new MonitoredVehicleJourney(
                         resultList.get(i-1).getRouteId(),
                         resultList.get(i-1).getRouteLongName(),
+                        resultList.get(i-1).getRouteColor(),
+                        resultList.get(i-1).getRouteTextColor(),
                         GlobalHelper.directionName(resultList.get(i-1).getDirectionId()),
                         resultList.get(i-1).getTripId(),
                         resultList.get(i-1).getTripHeadSign(),
                         resultList.get(i-1).getTripScheduleRelationship(),
+                        resultList.get(i-1).getBikesAllowed(),
                         resultList.get(i-1).getAgencyId(),
                         resultList.get(i-1).getFirstStopId(),
                         resultList.get(i-1).getFirstStopName(),
@@ -152,10 +155,13 @@ public class VehicleConnectionService implements GlobalVariable {
         MonitoredVehicleJourney monitoredVehicleJourney = new MonitoredVehicleJourney(
                 resultList.get(0).getRouteId(),
                 resultList.get(0).getRouteLongName(),
+                resultList.get(0).getRouteColor(),
+                resultList.get(0).getRouteTextColor(),
                 GlobalHelper.directionName(resultList.get(0).getDirectionId()),
                 resultList.get(0).getTripId(),
                 resultList.get(0).getTripHeadSign(),
                 resultList.get(0).getTripScheduleRelationship(),
+                resultList.get(0).getBikesAllowed(),
                 resultList.get(0).getAgencyId(),
                 resultList.get(0).getFirstStopId(),
                 resultList.get(0).getFirstStopName(),
@@ -302,14 +308,10 @@ public class VehicleConnectionService implements GlobalVariable {
     public String getVehicleMonitorConnection(String agency_id, String vehicle_id, Long approx) throws Exception {
         List<VehicleMonitoring> resultList;
         long timestamp = approx == 0 ? 0 : timeService.currentTimeToUnix() + approx;
-        if (vehicle_id == null) {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByAgency(agency_id, timestamp);
-        } else {
-            resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
+        resultList = vehicleMonitoringRepository.findVehicleMonitoringByParam(
                     agency_id,
                     vehicle_id,
                     timestamp);
-        }
 
         if (resultList == null || resultList.size() <= 0) {
             return null;

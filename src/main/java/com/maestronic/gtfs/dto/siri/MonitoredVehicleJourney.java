@@ -12,6 +12,10 @@ public class MonitoredVehicleJourney implements Serializable {
     private String routeRef;
     @XmlElement(name = "RouteName")
     private String routeName;
+    @XmlElement(name = "RouteColor")
+    private String routeColor;
+    @XmlElement(name = "RouteTextColor")
+    private String routeTextColor;
     @XmlElement(name = "DirectionRef")
     private String directionRef;
     @XmlElement(name = "TripRef")
@@ -20,6 +24,8 @@ public class MonitoredVehicleJourney implements Serializable {
     private String tripName;
     @XmlElement(name = "TripScheduleRelationship", nillable = true)
     private String tripScheduleRelationship;
+    @XmlElement(name = "BikesAllowed")
+    private Integer bikesAllowed;
     @XmlElement(name = "OperatorRef")
     private String operatorRef;
     @XmlElement(name = "OriginRef")
@@ -39,13 +45,16 @@ public class MonitoredVehicleJourney implements Serializable {
     @XmlElement(name = "OnwardCalls")
     private OnwardCalls onwardCalls;
 
-    public MonitoredVehicleJourney(String routeRef, String routeName, String directionRef, String tripRef, String tripName, String tripScheduleRelationship, String operatorRef, String originRef, String originNames, String destinationRef, String destinationNames, Location vehicleLocation, String vehicleRef, MonitoredCall monitoredCall, OnwardCalls onwardCalls) {
+    public MonitoredVehicleJourney(String routeRef, String routeName, String routeColor, String routeTextColor, String directionRef, String tripRef, String tripName, String tripScheduleRelationship, Integer bikesAllowed, String operatorRef, String originRef, String originNames, String destinationRef, String destinationNames, Location vehicleLocation, String vehicleRef, MonitoredCall monitoredCall, OnwardCalls onwardCalls) {
         this.routeRef = routeRef;
         this.routeName = routeName;
+        this.routeColor = routeColor;
+        this.routeTextColor = routeTextColor;
         this.directionRef = directionRef;
         this.tripRef = tripRef;
         this.tripName = tripName;
         this.tripScheduleRelationship = tripScheduleRelationship;
+        this.bikesAllowed = bikesAllowed;
         this.operatorRef = operatorRef;
         this.originRef = originRef;
         this.originNames = originNames;
