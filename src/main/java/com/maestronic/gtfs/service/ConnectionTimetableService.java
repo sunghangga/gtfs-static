@@ -1,5 +1,6 @@
 package com.maestronic.gtfs.service;
 
+import com.maestronic.gtfs.dto.custom.ConnectionRouteDto;
 import com.maestronic.gtfs.dto.siri.*;
 import com.maestronic.gtfs.entity.ConnectionTimetable;
 import com.maestronic.gtfs.repository.ConnectionTimetableRepository;
@@ -12,10 +13,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.Tuple;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ConnectionTimetableService implements GlobalVariable {
@@ -150,5 +153,25 @@ public class ConnectionTimetableService implements GlobalVariable {
         }
         Gtfs gtfs = getDataConnectionTimetable(resultList, stop_id);
         return GtfsJson.toJson(gtfs);
+    }
+
+    public List<ConnectionRouteDto> getConnectionRoutes(String routeId, String stopId, String arrivalTime) {
+        List<Tuple> resultList = connectionTimetableRepository.findConnectionRoutesWithTimeByParam(routeId, stopId, arrivalTime);
+
+        return resultList.stream().map(
+                t -> new ConnectionRouteDto(
+                        t.get("route_id", String.class),
+                        t.get("route_short_name", String.class),
+                        t.get("route_long_name", String.class),
+                        t.get("route_type", Integer.class),
+                        t.get("trip_id", String.class),
+                        t.get("stop_id", String.class),
+                        t.get("stop_sequence", Integer.class),
+                        t.get("aimed_arrival_time", String.class),
+                        t.get("expected_arrival_time", Long.class),
+                        t.get("arrival_delay", Integer.class),
+                        t.get("min_transfer_time", Integer.class)
+                )
+        ).collect(Collectors.toList());
     }
 }

@@ -1,6 +1,7 @@
 package com.maestronic.gtfs.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.maestronic.gtfs.dto.custom.ConnectionRouteDto;
 import com.maestronic.gtfs.service.ConnectionTimetableService;
 import com.maestronic.gtfs.util.GlobalVariable;
 import com.maestronic.gtfs.util.ResponseMessage;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @CrossOrigin
 @RestController
@@ -108,6 +110,59 @@ public class ConnectionTimetableController {
             headers.setContentType(MediaType.APPLICATION_XML);
             return new ResponseEntity<>(
                     ResponseMessage.missingRequestParameterError(HttpStatus.BAD_REQUEST.value(), "Parameter 'format' must have a value among: xml and json."),
+                    headers,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    @GetMapping(path = "api/gtfs/connection-routes", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getConnectionRoutes(@RequestParam String routeId,
+                                                      @RequestParam String stopId,
+                                                      @RequestParam String arrivalTime) {
+
+        headers = new HttpHeaders();
+
+        // Check if required parameter is empty or null
+        if (stopId.isEmpty() || stopId == null
+                || routeId.isEmpty() || routeId == null
+                || arrivalTime.isEmpty() || arrivalTime == null) {
+            throw new IllegalArgumentException();
+        }
+
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        try {
+            List<ConnectionRouteDto> response = connectionTimetableService.getConnectionRoutes(routeId, stopId, arrivalTime);
+
+            if (response == null) {
+                return new ResponseEntity<>(
+                        ResponseMessage.retrieveDataJson(
+                                HttpStatus.OK.value(),
+                                "No data available.",
+                                new ArrayList()
+                        ),
+                        headers,
+                        HttpStatus.OK
+                );
+            }
+
+            return new ResponseEntity<>(
+                    ResponseMessage.retrieveDataJson(
+                            HttpStatus.OK.value(),
+                            "Retrieved data successfully.",
+                            response
+                    ),
+                    headers,
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    ResponseMessage.exceptionErrorJson(
+                            HttpStatus.BAD_REQUEST.value(),
+                            "Something went wrong."
+                    ),
                     headers,
                     HttpStatus.BAD_REQUEST
             );

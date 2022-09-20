@@ -1,7 +1,7 @@
 package com.maestronic.gtfs.controller;
 
-import com.maestronic.gtfs.dto.custom.RouteDto;
-import com.maestronic.gtfs.service.RouteService;
+import com.maestronic.gtfs.dto.custom.TripDto;
+import com.maestronic.gtfs.service.TripService;
 import com.maestronic.gtfs.util.ResponseMessage;
 import com.maestronic.gtfs.validation.PageValidation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 
 @CrossOrigin
 @RestController
-public class RouteController {
+public class TripController {
 
     @Autowired
-    private RouteService routeService;
+    private TripService tripService;
     private HttpHeaders headers;
 
-    @GetMapping(path = "api/gtfs/routes", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Object> getRoutes(@Validated PageValidation pageValidation,
+    @GetMapping(path = "api/gtfs/trips", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getTrips(@Validated PageValidation pageValidation,
                                            BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
@@ -54,7 +54,7 @@ public class RouteController {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         try {
-            List<RouteDto> response = routeService.getRoutes(
+            List<TripDto> response = tripService.getTrips(
                     pageValidation.getPageNo() - 1,
                     pageValidation.getPageSize(),
                     pageValidation.getSortType().name());
@@ -93,8 +93,8 @@ public class RouteController {
         }
     }
 
-    @GetMapping(path = "api/gtfs/route/{routeId}", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Object> getRouteById(@PathVariable @NotNull String routeId) {
+    @GetMapping(path = "api/gtfs/trip/{tripId}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getTripById(@PathVariable @NotNull String tripId) {
 
         // Set headers
         headers = new HttpHeaders();
@@ -102,7 +102,7 @@ public class RouteController {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         try {
-            RouteDto response = routeService.getRoutesByRouteId(routeId);
+            TripDto response = tripService.getTripByTripId(tripId);
 
             if (response == null) {
                 return new ResponseEntity<>(

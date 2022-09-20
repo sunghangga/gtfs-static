@@ -63,7 +63,7 @@ public interface ConnectionTimetableRepository extends JpaRepository<ConnectionT
     @Modifying
     @Query(value = "SELECT to_r.route_id, to_r.route_short_name, to_r.route_long_name, to_r.route_type " +
             "FROM transfers tf " +
-            "INNER JOIN stop_times to_st on tf.from_stop_id = to_st.stop_id " +
+            "INNER JOIN stop_times to_st on tf.to_stop_id = to_st.stop_id " +
             "INNER JOIN trips to_t on to_st.trip_id = to_t.trip_id " +
             "INNER JOIN routes to_r on to_t.route_id = to_r.route_id " +
             "WHERE to_r.route_id != :route_id " +
@@ -72,4 +72,27 @@ public interface ConnectionTimetableRepository extends JpaRepository<ConnectionT
             "GROUP BY to_r.route_id, to_r.route_short_name, to_r.route_type, to_r.route_long_name", nativeQuery = true)
     List<Tuple> findConnectionRoutesByParam(@Param("route_id") String routeId,
                                             @Param("stop_id") String stopId);
+
+    @Modifying
+    @Query(value = "select c.*, stu.arrival_time expected_arrival_time, stu.arrival_delay\n" +
+            "from (select distinct on (to_r.route_id) to_r.route_id, to_r.route_short_name, to_r.route_long_name,\n" +
+            "to_r.route_type, to_t.trip_id, to_st.stop_id, to_st.stop_sequence,\n" +
+            "cast(date_part('epoch', to_st.arrival_time) * INTERVAL '1 second' as varchar) aimed_arrival_time, tf.min_transfer_time\n" +
+            "FROM transfers tf\n" +
+            "INNER JOIN stop_times to_st on tf.to_stop_id = to_st.stop_id\n" +
+            "INNER JOIN trips to_t on to_st.trip_id = to_t.trip_id\n" +
+            "INNER JOIN routes to_r on to_t.route_id = to_r.route_id\n" +
+            "WHERE tf.from_stop_id = :stopId\n" +
+            "and to_st.arrival_time >= (cast(:arrivalTime as interval) + (tf.min_transfer_time * interval '1 second'))\n" +
+            "and to_r.route_id != :routeId\n" +
+            "AND tf.transfer_type IS DISTINCT FROM 3\n" +
+            "GROUP BY to_r.route_id, to_r.route_short_name, to_r.route_type, to_r.route_long_name, to_t.trip_id,\n" +
+            "   to_st.stop_id, to_st.stop_sequence, to_st.arrival_time, tf.min_transfer_time\n" +
+            "order by to_r.route_id, to_st.arrival_time asc) c\n" +
+            "left join trip_updates tu on c.trip_id = tu.trip_id\n" +
+            "left join stop_time_updates stu on tu.id = stu.trip_update_id and stu.stop_id = c.stop_id and stu.stop_sequence = c.stop_sequence\n" +
+            "order by c.aimed_arrival_time asc", nativeQuery = true)
+    List<Tuple> findConnectionRoutesWithTimeByParam(@Param("routeId") String routeId,
+                                                    @Param("stopId") String stopId,
+                                                    @Param("arrivalTime") String arrivalTime);
 }
